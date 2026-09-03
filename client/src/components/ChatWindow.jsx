@@ -1,138 +1,130 @@
-import { useEffect, useRef, useState } from "react";
-import { useChats } from "../context/ChatContext.jsx";
-import { useMessages } from "../context/MessageContext.jsx";
-import { useSocketEvent } from "../context/SocketContext.jsx";
-import Avatar from "./Avatar.jsx";
-import MessageBubble from "./MessageBubble.jsx";
-import Composer from "./Composer.jsx";
-import {
-  chatName,
-  chatAvatar,
-  otherParticipant,
-  formatChatTime,
-} from "../lib/chatUtils.js";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import api from "../lib/api.js";
+import { useAuth } from "./AuthContext.jsx";
+import { useSocketEvent } from "./SocketContext.jsx";
 
-const dayLabel = (value) => {
-  const d = new Date(value);
-  const now = new Date();
-  if (d.toDateString() === now.toDateString()) return "Today";
+const ChatContext = createContext(null);
 
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+/** Newest activity first — the sidebar's ordering. */
+const byRecent = (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt);
 
-  return d.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" });
-};
+export const ChatProvider = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
 
-export default function ChatWindow() {
-  const { activeChat, activeChatId, currentUserId } = useChats();
-  const { messages, loading, hasMore, loadOlder, loadingOlder } = useMessages();
+  const [chats, setChats] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [typingUsers, setTypingUsers] = useState([]);
-  const bottomRef = useRef(null);
-  const scrollRef = useRef(null);
-
-  const other = otherParticipant(activeChat, currentUserId);
-  const name = chatName(activeChat, currentUserId);
-
-  // Jump to the newest message on load and whenever one arrives
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [messages.length, activeChatId]);
+  const loadChats = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.get("/chats");
+      setChats(data.chats.sort(byRecent));
+    } catch {
+      setError("Could not load chats");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    setTypingUsers([]);
-  }, [activeChatId]);
+    if (isAuthenticated) loadChats();
+    else {
+      setChats([]);
+      setActiveChatId(null);
+    }
+  }, [isAuthenticated, loadChats]);
 
-  useSocketEvent("typing:start", ({ chatId, userId, name: who }) => {
-    if (chatId !== activeChatId || userId === currentUserId) return;
-    setTypingUsers((prev) =>
-      prev.some((u) => u.userId === userId) ? prev : [...prev, { userId, name: who }]
+  /** Open (or create) a direct chat with a user, then select it. */
+  const openChatWith = useCallback(async (userId) => {
+    const { data } = await api.post("/chats", { userId });
+    setChats((prev) => {
+      const exists = prev.some((c) => c._id === data.chat._id);
+      return exists ? prev : [data.chat, ...prev].sort(byRecent);
+    });
+    setActiveChatId(data.chat._id);
+    return data.chat;
+  }, []);
+
+  const selectChat = useCallback(
+    async (chatId) => {
+      setActiveChatId(chatId);
+
+      // Optimistically clear the badge, then tell the server
+      setChats((prev) =>
+        prev.map((c) => (c._id === chatId ? { ...c, unreadCount: 0 } : c))
+      );
+      try {
+        await api.patch(`/messages/${chatId}/read`);
+      } catch {
+        // Not fatal — the badge will correct itself on next load
+      }
+    },
+    []
+  );
+
+  /* ---- Live updates ---- */
+
+  // Fired whenever a message lands in any of your chats
+  useSocketEvent("chat:updated", ({ chatId, lastMessage, unreadCount, updatedAt }) => {
+    setChats((prev) => {
+      const found = prev.find((c) => c._id === chatId);
+
+      // A chat we don't have yet (someone messaged us first) — refetch
+      if (!found) {
+        loadChats();
+        return prev;
+      }
+
+      return prev
+        .map((c) =>
+          c._id === chatId
+            ? {
+                ...c,
+                lastMessage,
+                updatedAt,
+                // Don't badge the chat the user is currently reading
+                unreadCount: c._id === activeChatId ? 0 : unreadCount,
+              }
+            : c
+        )
+        .sort(byRecent);
+    });
+  });
+
+  useSocketEvent("presence:update", ({ userId, isOnline, lastSeen }) => {
+    setChats((prev) =>
+      prev.map((c) => ({
+        ...c,
+        participants: c.participants?.map((p) =>
+          p._id === userId ? { ...p, isOnline, lastSeen: lastSeen ?? p.lastSeen } : p
+        ),
+      }))
     );
   });
 
-  useSocketEvent("typing:stop", ({ chatId, userId }) => {
-    if (chatId !== activeChatId) return;
-    setTypingUsers((prev) => prev.filter((u) => u.userId !== userId));
-  });
+  const activeChat = chats.find((c) => c._id === activeChatId) || null;
 
-  // Load older history when scrolled to the top
-  const onScroll = (e) => {
-    if (e.target.scrollTop < 60 && hasMore && !loadingOlder) loadOlder();
+  const value = {
+    chats,
+    setChats,
+    activeChat,
+    activeChatId,
+    selectChat,
+    openChatWith,
+    loadChats,
+    loading,
+    error,
+    currentUserId: user?._id,
   };
 
-  const subtitle = () => {
-    if (typingUsers.length) {
-      return activeChat?.isGroup
-        ? `${typingUsers.map((u) => u.name).join(", ")} typing...`
-        : "typing...";
-    }
-    if (activeChat?.isGroup) {
-      return `${activeChat.participants?.length || 0} members`;
-    }
-    if (other?.isOnline) return "online";
-    return other?.lastSeen ? `last seen ${formatChatTime(other.lastSeen)}` : "";
-  };
+  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+};
 
-  let lastDay = null;
-
-  return (
-    <section className="flex h-full flex-1 flex-col bg-[#efeae2]">
-      <header className="flex items-center gap-3 border-b border-neutral-200 bg-neutral-100 px-4 py-2.5">
-        <Avatar
-          src={chatAvatar(activeChat, currentUserId)}
-          name={name}
-          size="sm"
-          online={other?.isOnline}
-        />
-        <div className="min-w-0">
-          <p className="truncate font-medium text-neutral-900">{name}</p>
-          <p className="truncate text-xs text-neutral-500">{subtitle()}</p>
-        </div>
-      </header>
-
-      <div ref={scrollRef} onScroll={onScroll} className="flex-1 space-y-1 overflow-y-auto py-4">
-        {loadingOlder && (
-          <p className="py-2 text-center text-xs text-neutral-500">Loading older messages...</p>
-        )}
-
-        {loading && (
-          <p className="py-8 text-center text-sm text-neutral-500">Loading...</p>
-        )}
-
-        {!loading && messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-neutral-500">
-            No messages yet. Say hello.
-          </p>
-        )}
-
-        {messages.map((m) => {
-          const day = dayLabel(m.createdAt);
-          const showDay = day !== lastDay;
-          lastDay = day;
-
-          return (
-            <div key={m._id} className="space-y-1">
-              {showDay && (
-                <div className="flex justify-center py-2">
-                  <span className="rounded bg-white/80 px-3 py-1 text-xs text-neutral-500 shadow-sm">
-                    {day}
-                  </span>
-                </div>
-              )}
-              <MessageBubble
-                message={m}
-                mine={m.sender?._id === currentUserId}
-                showSender={activeChat?.isGroup}
-              />
-            </div>
-          );
-        })}
-
-        <div ref={bottomRef} />
-      </div>
-
-      <Composer />
-    </section>
-  );
-}
+export const useChats = () => {
+  const ctx = useContext(ChatContext);
+  if (!ctx) throw new Error("useChats must be used inside ChatProvider");
+  return ctx;
+};
