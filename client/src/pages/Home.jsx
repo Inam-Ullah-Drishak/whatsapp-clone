@@ -1,28 +1,29 @@
-import { useAuth } from "../context/AuthContext.jsx";
+import Sidebar from "../components/Sidebar.jsx";
+import ChatWindow from "../components/ChatWindow.jsx";
+import { useChats } from "../context/ChatContext.jsx";
 
-/**
- * Placeholder. Replaced by the real chat layout in the next step —
- * for now it just proves the token survives a refresh.
- */
 export default function Home() {
-  const { user, logout } = useAuth();
+  const { activeChat } = useChats();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-neutral-50">
-      <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-neutral-500">Signed in as</p>
-        <p className="mt-1 text-lg font-medium text-teal-800">
-          {user?.name || user?.phone}
-        </p>
-        <p className="mt-1 text-sm text-neutral-500">{user?.about}</p>
-
-        <button
-          onClick={logout}
-          className="mt-6 rounded bg-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-300"
-        >
-          Log out
-        </button>
+    <div className="flex h-screen bg-neutral-100">
+      {/* On mobile, show one pane at a time */}
+      <div className={`${activeChat ? "hidden sm:flex" : "flex"} h-full`}>
+        <Sidebar />
       </div>
+
+      {activeChat ? (
+        <ChatWindow />
+      ) : (
+        <main className="hidden flex-1 items-center justify-center border-l border-neutral-200 bg-neutral-50 sm:flex">
+          <div className="max-w-sm px-6 text-center">
+            <p className="text-xl font-light text-neutral-500">WhatsApp Clone</p>
+            <p className="mt-3 text-sm text-neutral-400">
+              Select a chat from the list to start messaging.
+            </p>
+          </div>
+        </main>
+      )}
     </div>
   );
 }
