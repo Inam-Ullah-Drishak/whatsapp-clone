@@ -10,6 +10,7 @@ import userRoutes from "./routes/userRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
+import statusRoutes from "./routes/statusRoutes.js";
 import { initSocket } from "./socket/index.js";
 import { generalLimiter } from "./middleware/rateLimit.js";
 
@@ -42,6 +43,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/status", statusRoutes);
 
 // Unknown route
 app.use((req, res) => {

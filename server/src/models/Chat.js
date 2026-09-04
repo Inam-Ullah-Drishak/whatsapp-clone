@@ -47,6 +47,8 @@ const chatSchema = new mongoose.Schema(
     // arrays of user ids rather than booleans on the chat.
     pinnedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    mutedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    favouritedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
     // "Delete chat" hides it for one person only. A new message clears
     // the flag so the conversation reappears, with history still hidden.

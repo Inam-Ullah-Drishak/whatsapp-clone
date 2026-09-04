@@ -110,6 +110,27 @@ export default function GroupInfoModal({ chat, onClose }) {
   const promote = (userId) =>
     run(() => api.post(`/chats/${chat._id}/admins/${userId}`));
 
+  const removeGroup = async () => {
+    if (
+      !confirm(
+        `Delete "${chat.groupName}" for everyone? All its messages will be permanently removed. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    setBusy(true);
+    try {
+      await api.delete(`/chats/${chat._id}/group`);
+      setActiveChatId(null);
+      await loadChats();
+      onClose();
+    } catch (err) {
+      setError(errorMessage(err));
+      setBusy(false);
+    }
+  };
+
   const leave = async () => {
     if (!confirm("Leave this group? You'll stop receiving its messages.")) return;
     setBusy(true);
@@ -331,14 +352,24 @@ export default function GroupInfoModal({ chat, onClose }) {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="border-t border-neutral-100 p-6 pt-4">
+        <div className="space-y-2 border-t border-neutral-100 p-6 pt-4">
           <button
             onClick={leave}
             disabled={busy}
-            className="w-full rounded border border-red-200 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-40"
+            className="w-full rounded border border-neutral-300 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:opacity-40"
           >
             Leave group
           </button>
+
+          {iAmAdmin && (
+            <button
+              onClick={removeGroup}
+              disabled={busy}
+              className="w-full rounded bg-red-600 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-40"
+            >
+              Delete group for everyone
+            </button>
+          )}
         </div>
       </div>
     </div>

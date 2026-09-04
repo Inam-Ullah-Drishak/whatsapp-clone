@@ -23,10 +23,14 @@ const withUnreadCount = (chat, userId) => {
     Boolean(key) && (list || []).some((id) => (id._id ? id._id : id).toString() === key);
   obj.isPinned = has(chat.pinnedBy);
   obj.isArchived = has(chat.archivedBy);
+  obj.isMuted = has(chat.mutedBy);
+  obj.isFavourite = has(chat.favouritedBy);
 
   delete obj.unreadCounts;
   delete obj.pinnedBy;
   delete obj.archivedBy;
+  delete obj.mutedBy;
+  delete obj.favouritedBy;
   return obj;
 };
 
@@ -59,7 +63,14 @@ const toggleFlag = async (field, req, res) => {
       : { $addToSet: { [field]: req.user._id } }
   );
 
-  return res.status(200).json({ [field === "pinnedBy" ? "pinned" : "archived"]: !already });
+  const keys = {
+    pinnedBy: "pinned",
+    archivedBy: "archived",
+    mutedBy: "muted",
+    favouritedBy: "favourite",
+  };
+  const key = keys[field];
+  return res.status(200).json({ [key]: !already });
 };
 
 /**
@@ -514,5 +525,58 @@ export const deleteChat = async (req, res) => {
   } catch (err) {
     console.error("deleteChat failed:", err.message);
     return res.status(500).json({ message: "Could not delete chat" });
+  }
+};
+
+
+/** PATCH /api/chats/:id/mute     (toggles) */
+export const toggleMute = async (req, res) => {
+  try {
+    return await toggleFlag("mutedBy", req, res);
+  } catch (err) {
+    console.error("toggleMute failed:", err.message);
+    return res.status(500).json({ message: "Could not mute chat" });
+  }
+};
+
+
+/**
+ * DELETE /api/chats/:id/group     Admins only.
+ *
+ * Removes the group for everyone and deletes its messages. Unlike
+ * "delete chat", which only hides a conversation for one person, this is
+ * destructive and cannot be undone.
+ */
+export const deleteGroup = async (req, res) => {
+  try {
+    const [chat, err] = await loadGroup(req.params.id, req.user._id, {
+      adminRequired: true,
+    });
+    if (err) return res.status(err.status).json({ message: err.message });
+
+    const Message = (await import("../models/Message.js")).default;
+
+    await Message.deleteMany({ chat: chat._id });
+    await Chat.deleteOne({ _id: chat._id });
+
+    const room = chatRoom(chat._id.toString());
+    getIO().to(room).emit("group:deleted", { chatId: chat._id.toString() });
+    getIO().socketsLeave(room);
+
+    return res.status(200).json({ message: "Group deleted" });
+  } catch (e) {
+    console.error("deleteGroup failed:", e.message);
+    return res.status(500).json({ message: "Could not delete group" });
+  }
+};
+
+
+/** PATCH /api/chats/:id/favourite    (toggles) */
+export const toggleFavourite = async (req, res) => {
+  try {
+    return await toggleFlag("favouritedBy", req, res);
+  } catch (err) {
+    console.error("toggleFavourite failed:", err.message);
+    return res.status(500).json({ message: "Could not update favourites" });
   }
 };

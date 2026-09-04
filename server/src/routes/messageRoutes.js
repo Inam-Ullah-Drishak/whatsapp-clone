@@ -9,6 +9,7 @@ import {
   getStarredMessages,
   searchMessages,
   reactToMessage,
+  getMessageInfo,
 } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -23,6 +24,7 @@ router.get("/starred/all", getStarredMessages);
 router.get("/search/all", searchMessages);
 router.post("/:id/star", toggleStar);
 router.post("/:id/react", reactToMessage);
+router.get("/:id/info", getMessageInfo);
 router.delete("/:id", deleteMessage);
 router.patch("/:id", editMessage);
 

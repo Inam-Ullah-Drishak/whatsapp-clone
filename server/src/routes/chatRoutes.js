@@ -11,7 +11,10 @@ import {
   promoteAdmin,
   togglePin,
   toggleArchive,
+  toggleMute,
+  toggleFavourite,
   deleteChat,
+  deleteGroup,
 } from "../controllers/chatController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -29,10 +32,13 @@ router.get("/:id", getChatById);
 router.patch("/:id/read", markChatRead);
 router.patch("/:id/pin", togglePin);
 router.patch("/:id/archive", toggleArchive);
+router.patch("/:id/mute", toggleMute);
+router.patch("/:id/favourite", toggleFavourite);
 router.delete("/:id", deleteChat);
 
 // Group management
 router.patch("/:id/group", updateGroup);
+router.delete("/:id/group", deleteGroup);
 router.post("/:id/participants", addParticipants);
 router.delete("/:id/participants/:userId", removeParticipant);
 router.post("/:id/admins/:userId", promoteAdmin);

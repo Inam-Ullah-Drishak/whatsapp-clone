@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
 import { MessageProvider } from "./context/MessageContext.jsx";
+import { StatusProvider } from "./context/StatusContext.jsx";
 import App from "./App.jsx";
 import "./index.css";
 
@@ -15,7 +16,9 @@ createRoot(document.getElementById("root")).render(
         <SocketProvider>
           <ChatProvider>
             <MessageProvider>
-              <App />
+              <StatusProvider>
+                <App />
+              </StatusProvider>
             </MessageProvider>
           </ChatProvider>
         </SocketProvider>

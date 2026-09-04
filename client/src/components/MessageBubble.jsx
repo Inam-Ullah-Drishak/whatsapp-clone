@@ -2,57 +2,10 @@ import { useState, useRef, useEffect } from "react";
 import { mediaUrl } from "../lib/api.js";
 import { useMessages } from "../context/MessageContext.jsx";
 import ForwardModal from "./ForwardModal.jsx";
+import MessageInfoModal from "./MessageInfoModal.jsx";
 import VoiceNote from "./VoiceNote.jsx";
+import { EMOJI_GROUPS, QUICK_REACTIONS as REACTIONS } from "../lib/emoji.js";
 
-const EMOJI_GROUPS = [
-  {
-    name: "Smileys",
-    emoji: [
-      "😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😉","😊","😇",
-      "🥰","😍","🤩","😘","😗","😋","😜","🤪","🤨","🧐","🤓","😎",
-      "🥳","😏","😒","😞","😔","😟","😕","🙁","😣","😖","😫","😩",
-      "🥺","😢","😭","😤","😠","😡","🤬","🤯","😳","🥵","🥶","😱",
-      "😨","😰","😥","😓","🤗","🤔","🤭","🤫","😐","😑","😶","😬",
-      "🙄","😮","😯","😲","🥱","😴","🤤","😪","😵","🤐","🥴","🤢",
-      "🤮","🤧","😷","🤒","🤕","🤑","🤠","😈","👿","💀","👻","👽",
-      "🤖","🎃",
-    ],
-  },
-  {
-    name: "Gestures",
-    emoji: [
-      "👍","👎","👌","🤌","✌️","🤞","🤟","🤘","🤙","👈","👉","👆",
-      "👇","☝️","✋","🤚","🖐️","🖖","👋","🤝","🙏","✍️","💪","🦾",
-      "👏","🙌","👐","🤲","🫶","💅","👀","👁️","🧠","🫀",
-    ],
-  },
-  {
-    name: "Hearts",
-    emoji: [
-      "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❣️","💕",
-      "💞","💓","💗","💖","💘","💝","💟","♥️",
-    ],
-  },
-  {
-    name: "Symbols",
-    emoji: [
-      "🔥","✨","⭐","🌟","💫","⚡","💥","💯","✅","❌","❗","❓",
-      "⚠️","🚫","💬","💭","🎉","🎊","🎁","🏆","🥇","🎯","🔔","🔕",
-      "💰","💎","🔒","🔑","📌","📎","🔗","⏰","⌛","🌈","☀️","🌙",
-    ],
-  },
-  {
-    name: "Things",
-    emoji: [
-      "🍕","🍔","🍟","🌮","🍿","🍩","🍪","🎂","🍰","☕","🍵","🍺",
-      "🍻","🥂","🍾","🍇","🍉","🍓","🍌","🥑","🐶","🐱","🐭","🐰",
-      "🦊","🐻","🐼","🐨","🦁","🐮","🐷","🐸","🐵","🦄","🐝","🦋",
-      "⚽","🏀","🏈","🎾","🎮","🎧","🎸","📱","💻","🚗","✈️","🏠",
-    ],
-  },
-];
-
-const REACTIONS = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F64F}"];
 
 const time = (value) =>
   new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -93,6 +46,7 @@ export default function MessageBubble({ message, mine, showSender }) {
   } = useMessages();
   const [menuOpen, setMenuOpen] = useState(false);
   const [forwarding, setForwarding] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
   const [dropUp, setDropUp] = useState(false);
   const [reactOpen, setReactOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -350,6 +304,18 @@ export default function MessageBubble({ message, mine, showSender }) {
                   Forward
                 </button>
 
+                {mine && (
+                  <button
+                    onClick={() => {
+                      setInfoOpen(true);
+                      setMenuOpen(false);
+                    }}
+                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                  >
+                    Info
+                  </button>
+                )}
+
                 {canEdit && (
                   <button
                     onClick={() => {
@@ -528,6 +494,10 @@ export default function MessageBubble({ message, mine, showSender }) {
       </div>
       {forwarding && (
         <ForwardModal message={message} onClose={() => setForwarding(false)} />
+      )}
+
+      {infoOpen && (
+        <MessageInfoModal message={message} onClose={() => setInfoOpen(false)} />
       )}
     </div>
   );

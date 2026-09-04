@@ -2,6 +2,8 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 import api from "../lib/api.js";
 import { useAuth } from "./AuthContext.jsx";
 import { useSocket, useSocketEvent } from "./SocketContext.jsx";
+import { showNotification, setTitleBadge } from "../lib/notify.js";
+import { chatName } from "../lib/chatUtils.js";
 
 const ChatContext = createContext(null);
 
@@ -78,6 +80,20 @@ export const ChatProvider = ({ children }) => {
     );
   }, []);
 
+  const toggleFavourite = useCallback(async (chatId) => {
+    const { data } = await api.patch(`/chats/${chatId}/favourite`);
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId ? { ...c, isFavourite: data.favourite } : c))
+    );
+  }, []);
+
+  const toggleMute = useCallback(async (chatId) => {
+    const { data } = await api.patch(`/chats/${chatId}/mute`);
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId ? { ...c, isMuted: data.muted } : c))
+    );
+  }, []);
+
   const toggleArchive = useCallback(async (chatId) => {
     const { data } = await api.patch(`/chats/${chatId}/archive`);
     setChats((prev) =>
@@ -97,6 +113,27 @@ export const ChatProvider = ({ children }) => {
   useSocketEvent("chat:updated", ({ chatId, lastMessage, unreadCount, updatedAt }) => {
     setChats((prev) => {
       const found = prev.find((c) => c._id === chatId);
+
+      // Notify only for other people's messages, in chats that aren't
+      // muted, and only when the user isn't already looking at them.
+      const fromSomeoneElse = lastMessage?.sender?._id !== user?._id;
+      const looking = chatId === activeChatId && !document.hidden;
+
+      if (found && fromSomeoneElse && !found.isMuted && !looking) {
+        const body =
+          lastMessage?.type === "text"
+            ? lastMessage.content
+            : lastMessage?.type
+            ? `Sent ${lastMessage.type === "image" ? "a photo" : "an attachment"}`
+            : "New message";
+
+        showNotification({
+          title: chatName(found, user?._id),
+          body,
+          tag: chatId,
+          onClick: () => setActiveChatId(chatId),
+        });
+      }
 
       // A chat we don't have yet (someone messaged us first) — refetch
       if (!found) {
@@ -156,6 +193,14 @@ export const ChatProvider = ({ children }) => {
     );
   });
 
+  // Unread total in the tab title, muted chats excluded
+  useEffect(() => {
+    const total = chats
+      .filter((c) => !c.isMuted)
+      .reduce((sum, c) => sum + (c.unreadCount || 0), 0);
+    setTitleBadge(total);
+  }, [chats]);
+
   const activeChat = chats.find((c) => c._id === activeChatId) || null;
 
   const value = {
@@ -168,6 +213,8 @@ export const ChatProvider = ({ children }) => {
     openChatWith,
     togglePin,
     toggleArchive,
+    toggleMute,
+    toggleFavourite,
     deleteChat,
     loadChats,
     loading,

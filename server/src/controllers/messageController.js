@@ -217,6 +217,21 @@ export const markMessagesRead = async (req, res) => {
       return res.status(403).json({ message: "You are not part of this chat" });
     }
 
+    const now = new Date();
+
+    // Reading implies delivery, so record that first — otherwise a message
+    // can show as read by someone with an empty delivered list.
+    // Two passes because a single updateMany can't push conditionally to
+    // two different arrays.
+    await Message.updateMany(
+      {
+        chat: chatId,
+        sender: { $ne: req.user._id },
+        "deliveredTo.user": { $ne: req.user._id },
+      },
+      { $push: { deliveredTo: { user: req.user._id, at: now } } }
+    );
+
     // Your own messages are excluded — you don't read-receipt yourself.
     await Message.updateMany(
       {
@@ -225,7 +240,7 @@ export const markMessagesRead = async (req, res) => {
         "readBy.user": { $ne: req.user._id },
       },
       {
-        $push: { readBy: { user: req.user._id, at: new Date() } },
+        $push: { readBy: { user: req.user._id, at: now } },
         $set: { status: "read" },
       }
     );
@@ -561,5 +576,55 @@ export const reactToMessage = async (req, res) => {
   } catch (err) {
     console.error("reactToMessage failed:", err.message);
     return res.status(500).json({ message: "Could not react to message" });
+  }
+};
+
+
+/**
+ * GET /api/messages/:id/info
+ *
+ * Per-recipient receipts for one of your own messages. Restricted to the
+ * sender: who has read your message is not something other participants
+ * should be able to query.
+ */
+export const getMessageInfo = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    const message = await Message.findById(id)
+      .populate("readBy.user", SENDER_FIELDS)
+      .populate("deliveredTo.user", SENDER_FIELDS)
+      .populate({ path: "chat", select: "participants isGroup" });
+
+    if (!message) return res.status(404).json({ message: "Message not found" });
+
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You can only view info for your own messages" });
+    }
+
+    const readIds = message.readBy.map((r) => r.user?._id?.toString());
+
+    // Anyone in the chat who is neither the sender nor a reader
+    const pending = (message.chat?.participants || [])
+      .map((p) => p.toString())
+      .filter((p) => p !== req.user._id.toString() && !readIds.includes(p));
+
+    const User = (await import("../models/User.js")).default;
+    const pendingUsers = await User.find({ _id: { $in: pending } }).select(SENDER_FIELDS);
+
+    return res.status(200).json({
+      readBy: message.readBy,
+      deliveredTo: message.deliveredTo,
+      pending: pendingUsers,
+      sentAt: message.createdAt,
+      isGroup: Boolean(message.chat?.isGroup),
+    });
+  } catch (err) {
+    console.error("getMessageInfo failed:", err.message);
+    return res.status(500).json({ message: "Could not load message info" });
   }
 };
