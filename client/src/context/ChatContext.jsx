@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api from "../lib/api.js";
 import { useAuth } from "./AuthContext.jsx";
-import { useSocketEvent } from "./SocketContext.jsx";
+import { useSocket, useSocketEvent } from "./SocketContext.jsx";
 
 const ChatContext = createContext(null);
 
@@ -10,6 +10,7 @@ const byRecent = (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt);
 
 export const ChatProvider = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
+  const { emit } = useSocket();
 
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -40,13 +41,18 @@ export const ChatProvider = ({ children }) => {
   /** Open (or create) a direct chat with a user, then select it. */
   const openChatWith = useCallback(async (userId) => {
     const { data } = await api.post("/chats", { userId });
+
+    // Sockets auto-join rooms on connect, so a chat created afterwards
+    // needs an explicit join or its messages never arrive live.
+    emit("chat:join", data.chat._id);
+
     setChats((prev) => {
       const exists = prev.some((c) => c._id === data.chat._id);
       return exists ? prev : [data.chat, ...prev].sort(byRecent);
     });
     setActiveChatId(data.chat._id);
     return data.chat;
-  }, []);
+  }, [emit]);
 
   const selectChat = useCallback(
     async (chatId) => {
@@ -74,6 +80,7 @@ export const ChatProvider = ({ children }) => {
 
       // A chat we don't have yet (someone messaged us first) — refetch
       if (!found) {
+        emit("chat:join", chatId);
         loadChats();
         return prev;
       }
@@ -92,6 +99,30 @@ export const ChatProvider = ({ children }) => {
         )
         .sort(byRecent);
     });
+  });
+
+  // A group was renamed, or members changed
+  useSocketEvent("group:updated", ({ chat }) => {
+    setChats((prev) =>
+      prev.map((c) =>
+        c._id === chat._id
+          ? // Keep our own unread count: the broadcast can't carry a
+            // per-user number, so it arrives as 0 for everyone.
+            { ...chat, unreadCount: c.unreadCount }
+          : c
+      )
+    );
+  });
+
+  useSocketEvent("group:removed", ({ chatId, userId }) => {
+    if (userId !== user?._id) return;
+    setChats((prev) => prev.filter((c) => c._id !== chatId));
+    setActiveChatId((cur) => (cur === chatId ? null : cur));
+  });
+
+  useSocketEvent("group:deleted", ({ chatId }) => {
+    setChats((prev) => prev.filter((c) => c._id !== chatId));
+    setActiveChatId((cur) => (cur === chatId ? null : cur));
   });
 
   useSocketEvent("presence:update", ({ userId, isOnline, lastSeen }) => {
@@ -113,6 +144,7 @@ export const ChatProvider = ({ children }) => {
     activeChat,
     activeChatId,
     selectChat,
+    setActiveChatId,
     openChatWith,
     loadChats,
     loading,

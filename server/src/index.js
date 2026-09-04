@@ -11,6 +11,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import { initSocket } from "./socket/index.js";
+import { generalLimiter } from "./middleware/rateLimit.js";
 
 await connectDB();
 
@@ -18,6 +19,11 @@ const app = express();
 const server = http.createServer(app);
 
 initSocket(server);
+
+// Behind a proxy (Render, Railway, nginx) the client IP arrives in a
+// header. Without this, every request looks like it comes from the proxy
+// and the rate limiter would throttle all users as one.
+app.set("trust proxy", 1);
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
@@ -28,6 +34,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+
+app.use("/api", generalLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

@@ -5,6 +5,7 @@ import Avatar from "./Avatar.jsx";
 import { mediaUrl } from "../lib/api.js";
 import NewChatModal from "./NewChatModal.jsx";
 import ProfileModal from "./ProfileModal.jsx";
+import NewGroupModal from "./NewGroupModal.jsx";
 import {
   chatName,
   chatAvatar,
@@ -63,6 +64,7 @@ export default function Sidebar() {
   const [query, setQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showNewGroup, setShowNewGroup] = useState(false);
 
   // A user with no name has never completed setup — open it for them once
   const needsSetup = Boolean(user) && !user.name;
@@ -139,7 +141,17 @@ export default function Sidebar() {
         ))}
       </div>
 
-      {showNewChat && <NewChatModal onClose={() => setShowNewChat(false)} />}
+      {showNewChat && (
+        <NewChatModal
+          onClose={() => setShowNewChat(false)}
+          onNewGroup={() => {
+            setShowNewChat(false);
+            setShowNewGroup(true);
+          }}
+        />
+      )}
+
+      {showNewGroup && <NewGroupModal onClose={() => setShowNewGroup(false)} />}
 
       {(showProfile || needsSetup) && (
         <ProfileModal

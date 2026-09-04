@@ -3,7 +3,7 @@ import api, { errorMessage, mediaUrl } from "../lib/api.js";
 import { useChats } from "../context/ChatContext.jsx";
 import Avatar from "./Avatar.jsx";
 
-export default function NewChatModal({ onClose }) {
+export default function NewChatModal({ onClose, onNewGroup }) {
   const { openChatWith } = useChats();
 
   const [phone, setPhone] = useState("+92");
@@ -81,6 +81,19 @@ export default function NewChatModal({ onClose }) {
         </form>
 
         {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+
+        <button
+          type="button"
+          onClick={onNewGroup}
+          className="mt-4 flex w-full items-center gap-3 rounded-lg p-2 text-left text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+        >
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </span>
+          New group
+        </button>
 
         {result && (
           <button

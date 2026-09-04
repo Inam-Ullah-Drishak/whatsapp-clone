@@ -5,6 +5,10 @@ import {
   getChatById,
   createGroup,
   markChatRead,
+  updateGroup,
+  addParticipants,
+  removeParticipant,
+  promoteAdmin,
 } from "../controllers/chatController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -20,5 +24,11 @@ router.get("/", getChats);
 
 router.get("/:id", getChatById);
 router.patch("/:id/read", markChatRead);
+
+// Group management
+router.patch("/:id/group", updateGroup);
+router.post("/:id/participants", addParticipants);
+router.delete("/:id/participants/:userId", removeParticipant);
+router.post("/:id/admins/:userId", promoteAdmin);
 
 export default router;

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
+import { getIO, chatRoom, userRoom } from "../socket/io.js";
 
 const PARTICIPANT_FIELDS = "_id name about avatar phone isOnline lastSeen";
 
@@ -11,7 +12,12 @@ const PARTICIPANT_FIELDS = "_id name about avatar phone isOnline lastSeen";
 const withUnreadCount = (chat, userId) => {
   const obj = chat.toObject ? chat.toObject() : chat;
   const counts = chat.unreadCounts || new Map();
-  obj.unreadCount = (counts.get ? counts.get(userId.toString()) : counts[userId]) || 0;
+
+  // userId is null for room-wide broadcasts, which can't carry a
+  // per-user badge — clients keep their own count in that case.
+  const key = userId ? userId.toString() : null;
+  obj.unreadCount = key ? (counts.get ? counts.get(key) : counts[key]) || 0 : 0;
+
   delete obj.unreadCounts;
   return obj;
 };
@@ -183,5 +189,218 @@ export const markChatRead = async (req, res) => {
   } catch (err) {
     console.error("markChatRead failed:", err.message);
     return res.status(500).json({ message: "Could not mark chat as read" });
+  }
+};
+
+
+/* ------------------------------------------------------------------ */
+/* Group management                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Load a group and check the caller's rights. Returns [chat, errorResponse]. */
+const loadGroup = async (chatId, userId, { adminRequired = false } = {}) => {
+  if (!mongoose.isValidObjectId(chatId)) {
+    return [null, { status: 400, message: "Invalid chat id" }];
+  }
+
+  const chat = await Chat.findById(chatId);
+  if (!chat) return [null, { status: 404, message: "Chat not found" }];
+  if (!chat.isGroup) return [null, { status: 400, message: "This is not a group chat" }];
+
+  const isMember = chat.participants.some((p) => p.toString() === userId.toString());
+  if (!isMember) {
+    return [null, { status: 403, message: "You are not part of this group" }];
+  }
+
+  if (adminRequired) {
+    const isAdmin = chat.groupAdmins.some((a) => a.toString() === userId.toString());
+    if (!isAdmin) {
+      return [null, { status: 403, message: "Only group admins can do that" }];
+    }
+  }
+
+  return [chat, null];
+};
+
+/** Push the updated group to everyone in it. */
+const broadcastGroup = async (chat) => {
+  await chat.populate("participants", PARTICIPANT_FIELDS);
+  getIO().to(chatRoom(chat._id.toString())).emit("group:updated", {
+    chat: withUnreadCount(chat, null),
+  });
+};
+
+/**
+ * PATCH /api/chats/:id/group
+ * Body: { name?, avatar? }   Admins only.
+ */
+export const updateGroup = async (req, res) => {
+  try {
+    const [chat, err] = await loadGroup(req.params.id, req.user._id, {
+      adminRequired: true,
+    });
+    if (err) return res.status(err.status).json({ message: err.message });
+
+    const { name, avatar } = req.body;
+
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (!trimmed) return res.status(400).json({ message: "Group name cannot be empty" });
+      if (trimmed.length > 100) {
+        return res.status(400).json({ message: "Group name must be 100 characters or fewer" });
+      }
+      chat.groupName = trimmed;
+    }
+
+    if (avatar !== undefined) chat.groupAvatar = avatar;
+
+    await chat.save();
+    await broadcastGroup(chat);
+
+    return res.status(200).json({ chat: withUnreadCount(chat, req.user._id) });
+  } catch (e) {
+    console.error("updateGroup failed:", e.message);
+    return res.status(500).json({ message: "Could not update group" });
+  }
+};
+
+/**
+ * POST /api/chats/:id/participants
+ * Body: { participants: [userId, ...] }   Admins only.
+ */
+export const addParticipants = async (req, res) => {
+  try {
+    const [chat, err] = await loadGroup(req.params.id, req.user._id, {
+      adminRequired: true,
+    });
+    if (err) return res.status(err.status).json({ message: err.message });
+
+    const { participants } = req.body;
+    if (!Array.isArray(participants) || participants.length === 0) {
+      return res.status(400).json({ message: "No users to add" });
+    }
+    if (participants.some((id) => !mongoose.isValidObjectId(id))) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const found = await User.countDocuments({
+      _id: { $in: participants },
+      isVerified: true,
+    });
+    if (found !== new Set(participants).size) {
+      return res.status(400).json({ message: "One or more users do not exist" });
+    }
+
+    // $addToSet ignores anyone already in the group
+    await Chat.updateOne(
+      { _id: chat._id },
+      { $addToSet: { participants: { $each: participants } } }
+    );
+
+    const updated = await Chat.findById(chat._id);
+
+    // Pull the new members' sockets into the room so they get messages live
+    participants.forEach((id) => {
+      getIO().in(userRoom(id.toString())).socketsJoin(chatRoom(chat._id.toString()));
+    });
+
+    await broadcastGroup(updated);
+
+    return res.status(200).json({ chat: withUnreadCount(updated, req.user._id) });
+  } catch (e) {
+    console.error("addParticipants failed:", e.message);
+    return res.status(500).json({ message: "Could not add participants" });
+  }
+};
+
+/**
+ * DELETE /api/chats/:id/participants/:userId
+ * Admins remove others; anyone may remove themselves (that's leaving).
+ */
+export const removeParticipant = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const self = userId === req.user._id.toString();
+
+    const [chat, err] = await loadGroup(req.params.id, req.user._id, {
+      adminRequired: !self,
+    });
+    if (err) return res.status(err.status).json({ message: err.message });
+
+    if (!chat.participants.some((p) => p.toString() === userId)) {
+      return res.status(400).json({ message: "That user is not in this group" });
+    }
+
+    await Chat.updateOne(
+      { _id: chat._id },
+      { $pull: { participants: userId, groupAdmins: userId } }
+    );
+
+    const updated = await Chat.findById(chat._id);
+
+    // Nobody left — delete the group rather than leave an orphan
+    if (updated.participants.length === 0) {
+      await Chat.deleteOne({ _id: chat._id });
+      getIO().to(chatRoom(chat._id.toString())).emit("group:deleted", {
+        chatId: chat._id.toString(),
+      });
+      return res.status(200).json({ message: "Group deleted" });
+    }
+
+    // Last admin left — promote the longest-standing member so the group
+    // can still be managed
+    if (updated.groupAdmins.length === 0) {
+      updated.groupAdmins = [updated.participants[0]];
+      await updated.save();
+    }
+
+    getIO().to(chatRoom(chat._id.toString())).emit("group:removed", {
+      chatId: chat._id.toString(),
+      userId,
+    });
+
+    getIO().in(userRoom(userId)).socketsLeave(chatRoom(chat._id.toString()));
+
+    await broadcastGroup(updated);
+
+    return res.status(200).json({ message: self ? "You left the group" : "Member removed" });
+  } catch (e) {
+    console.error("removeParticipant failed:", e.message);
+    return res.status(500).json({ message: "Could not remove participant" });
+  }
+};
+
+/**
+ * POST /api/chats/:id/admins/:userId    Admins only.
+ */
+export const promoteAdmin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ message: "Invalid user id" });
+    }
+
+    const [chat, err] = await loadGroup(req.params.id, req.user._id, {
+      adminRequired: true,
+    });
+    if (err) return res.status(err.status).json({ message: err.message });
+
+    if (!chat.participants.some((p) => p.toString() === userId)) {
+      return res.status(400).json({ message: "That user is not in this group" });
+    }
+
+    await Chat.updateOne({ _id: chat._id }, { $addToSet: { groupAdmins: userId } });
+
+    const updated = await Chat.findById(chat._id);
+    await broadcastGroup(updated);
+
+    return res.status(200).json({ message: "Member promoted to admin" });
+  } catch (e) {
+    console.error("promoteAdmin failed:", e.message);
+    return res.status(500).json({ message: "Could not promote member" });
   }
 };

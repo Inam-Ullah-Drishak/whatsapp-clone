@@ -14,6 +14,8 @@ export const MessageProvider = ({ children }) => {
   const { emit } = useSocket();
 
   const [messages, setMessages] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -27,6 +29,9 @@ export const MessageProvider = ({ children }) => {
   /* ---- Loading ---- */
 
   useEffect(() => {
+    setReplyingTo(null);
+    setEditingMessage(null);
+
     if (!activeChatId) {
       setMessages([]);
       setHasMore(false);
@@ -80,6 +85,7 @@ export const MessageProvider = ({ children }) => {
       if (!chatId || (!content.trim() && !extra.mediaUrl)) return;
 
       // Optimistic bubble so the UI never waits on the network
+      const parent = replyingTo;
       const tempId = `temp-${Date.now()}`;
       const optimistic = {
         _id: tempId,
@@ -91,21 +97,29 @@ export const MessageProvider = ({ children }) => {
         status: "sending",
         readBy: [],
         deliveredTo: [],
+        replyTo: parent || null,
         ...extra,
       };
       setMessages((prev) => [...prev, optimistic]);
+      setReplyingTo(null);
 
       try {
         const { data } = await api.post("/messages", {
           chatId,
           content: content.trim(),
+          replyTo: parent?._id || undefined,
           ...extra,
         });
 
-        // Swap the placeholder for the server's copy
-        setMessages((prev) =>
-          prev.map((m) => (m._id === tempId ? data.message : m))
-        );
+        // The socket may have already delivered this message before the
+        // POST resolved. If so, drop the placeholder instead of swapping,
+        // or we end up with the same message twice.
+        setMessages((prev) => {
+          const alreadyArrived = prev.some((m) => m._id === data.message._id);
+          return alreadyArrived
+            ? prev.filter((m) => m._id !== tempId)
+            : prev.map((m) => (m._id === tempId ? data.message : m));
+        });
       } catch (err) {
         setMessages((prev) =>
           prev.map((m) => (m._id === tempId ? { ...m, status: "failed" } : m))
@@ -113,7 +127,35 @@ export const MessageProvider = ({ children }) => {
         throw err;
       }
     },
-    [activeChatId, user]
+    [activeChatId, user, replyingTo]
+  );
+
+  const editMessage = useCallback(async (messageId, content) => {
+    const { data } = await api.patch(`/messages/${messageId}`, { content });
+    setMessages((prev) =>
+      prev.map((m) => (m._id === messageId ? data.message : m))
+    );
+    setEditingMessage(null);
+  }, []);
+
+  /* ---- Deleting ---- */
+
+  const deleteMessage = useCallback(
+    async (messageId, scope = "me") => {
+      await api.delete(`/messages/${messageId}`, { params: { scope } });
+
+      setMessages((prev) =>
+        scope === "everyone"
+          ? prev.map((m) =>
+              m._id === messageId
+                ? { ...m, isDeletedForEveryone: true, content: "", mediaUrl: "" }
+                : m
+            )
+          : // "Delete for me" removes it from this client entirely
+            prev.filter((m) => m._id !== messageId)
+      );
+    },
+    []
   );
 
   /* ---- Live updates ---- */
@@ -149,6 +191,13 @@ export const MessageProvider = ({ children }) => {
     );
   });
 
+  useSocketEvent("message:edited", ({ message }) => {
+    if (message.chat !== activeChatIdRef.current) return;
+    setMessages((prev) =>
+      prev.map((m) => (m._id === message._id ? message : m))
+    );
+  });
+
   useSocketEvent("message:deleted", ({ messageId, chatId }) => {
     if (chatId !== activeChatIdRef.current) return;
     setMessages((prev) =>
@@ -167,6 +216,12 @@ export const MessageProvider = ({ children }) => {
     hasMore,
     error,
     sendMessage,
+    deleteMessage,
+    replyingTo,
+    setReplyingTo,
+    editingMessage,
+    setEditingMessage,
+    editMessage,
     loadOlder,
     currentUserId: user?._id,
   };

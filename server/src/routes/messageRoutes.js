@@ -4,6 +4,7 @@ import {
   getMessages,
   markMessagesRead,
   deleteMessage,
+  editMessage,
 } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -13,6 +14,7 @@ router.use(protect);
 
 router.post("/", sendMessage);
 router.delete("/:id", deleteMessage);
+router.patch("/:id", editMessage);
 
 router.get("/:chatId", getMessages);
 router.patch("/:chatId/read", markMessagesRead);

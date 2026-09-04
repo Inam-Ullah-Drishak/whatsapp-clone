@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useChats } from "../context/ChatContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { useMessages } from "../context/MessageContext.jsx";
 import { useSocketEvent } from "../context/SocketContext.jsx";
 import Avatar from "./Avatar.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import Composer from "./Composer.jsx";
+import GroupInfoModal from "./GroupInfoModal.jsx";
+import ContactInfoModal from "./ContactInfoModal.jsx";
 import {
   chatName,
   chatAvatar,
@@ -25,15 +28,25 @@ const dayLabel = (value) => {
 };
 
 export default function ChatWindow() {
-  const { activeChat, activeChatId, currentUserId } = useChats();
+  const { activeChat, activeChatId, currentUserId, setActiveChatId } = useChats();
+  const { user } = useAuth();
   const { messages, loading, hasMore, loadOlder, loadingOlder } = useMessages();
 
   const [typingUsers, setTypingUsers] = useState([]);
+  const [showInfo, setShowInfo] = useState(false);
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
 
   const other = otherParticipant(activeChat, currentUserId);
   const name = chatName(activeChat, currentUserId);
+
+  // Only our own blocks are knowable — the server never reveals whether
+  // the other person has blocked us.
+  const iBlockedThem =
+    Boolean(other) &&
+    (user?.blockedUsers || []).some(
+      (id) => (id._id ? id._id : id).toString() === other._id
+    );
 
   // Jump to the newest message on load and whenever one arrives
   useEffect(() => {
@@ -78,18 +91,44 @@ export default function ChatWindow() {
 
   return (
     <section className="flex h-full flex-1 flex-col bg-[#efeae2]">
-      <header className="flex items-center gap-3 border-b border-neutral-200 bg-neutral-100 px-4 py-2.5">
-        <Avatar
-          src={chatAvatar(activeChat, currentUserId)}
-          name={name}
-          size="sm"
-          online={other?.isOnline}
-        />
-        <div className="min-w-0">
-          <p className="truncate font-medium text-neutral-900">{name}</p>
-          <p className="truncate text-xs text-neutral-500">{subtitle()}</p>
-        </div>
+      <header className="flex items-center gap-2 border-b border-neutral-200 bg-neutral-100 px-3 py-2.5">
+        {/* Mobile only: the sidebar is hidden once a chat is open */}
+        <button
+          onClick={() => setActiveChatId(null)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-neutral-200 sm:hidden"
+          aria-label="Back to chats"
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => setShowInfo(true)}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-neutral-200"
+          title={activeChat?.isGroup ? "Group info" : "Contact info"}
+        >
+          <Avatar
+            src={chatAvatar(activeChat, currentUserId)}
+            name={name}
+            size="sm"
+            online={other?.isOnline}
+          />
+          <div className="min-w-0">
+            <p className="truncate font-medium text-neutral-900">{name}</p>
+            <p className="truncate text-xs text-neutral-500">{subtitle()}</p>
+          </div>
+        </button>
       </header>
+
+      {showInfo &&
+        (activeChat?.isGroup ? (
+          <GroupInfoModal chat={activeChat} onClose={() => setShowInfo(false)} />
+        ) : (
+          other && (
+            <ContactInfoModal person={other} onClose={() => setShowInfo(false)} />
+          )
+        ))}
 
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 space-y-1 overflow-y-auto py-4">
         {loadingOlder && (
@@ -132,7 +171,21 @@ export default function ChatWindow() {
         <div ref={bottomRef} />
       </div>
 
-      <Composer />
+      {iBlockedThem ? (
+        <div className="border-t border-neutral-200 bg-neutral-100 px-4 py-4 text-center">
+          <p className="text-sm text-neutral-600">
+            You blocked {name}. Unblock to send messages.
+          </p>
+          <button
+            onClick={() => setShowInfo(true)}
+            className="mt-1 text-sm font-medium text-emerald-700 hover:underline"
+          >
+            Open contact info
+          </button>
+        </div>
+      ) : (
+        <Composer />
+      )}
     </section>
   );
 }

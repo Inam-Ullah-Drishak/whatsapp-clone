@@ -5,6 +5,8 @@ import User from "../models/User.js";
 import { getIO, chatRoom, userRoom } from "../socket/io.js";
 
 const SENDER_FIELDS = "_id name avatar";
+// WhatsApp allows edits for 15 minutes; the same window keeps history honest
+const EDIT_WINDOW_MS = 15 * 60 * 1000;
 const DEFAULT_LIMIT = 30;
 const MAX_LIMIT = 100;
 
@@ -283,5 +285,72 @@ export const deleteMessage = async (req, res) => {
   } catch (err) {
     console.error("deleteMessage failed:", err.message);
     return res.status(500).json({ message: "Could not delete message" });
+  }
+};
+
+
+/**
+ * PATCH /api/messages/:id
+ * Body: { content }
+ *
+ * Text only, sender only, within the edit window.
+ */
+export const editMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    if (!content?.trim()) {
+      return res.status(400).json({ message: "Message cannot be empty" });
+    }
+
+    const message = await Message.findById(id);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "You can only edit your own messages" });
+    }
+
+    if (message.isDeletedForEveryone) {
+      return res.status(400).json({ message: "This message was deleted" });
+    }
+
+    if (message.type !== "text") {
+      return res.status(400).json({ message: "Only text messages can be edited" });
+    }
+
+    if (Date.now() - message.createdAt.getTime() > EDIT_WINDOW_MS) {
+      return res.status(400).json({ message: "This message is too old to edit" });
+    }
+
+    message.content = content.trim();
+    message.editedAt = new Date();
+    await message.save();
+
+    await message.populate([
+      { path: "sender", select: SENDER_FIELDS },
+      { path: "replyTo", populate: { path: "sender", select: SENDER_FIELDS } },
+    ]);
+
+    getIO().to(chatRoom(message.chat.toString())).emit("message:edited", {
+      message,
+    });
+
+    // The sidebar preview may be showing this message
+    const chat = await Chat.findById(message.chat);
+    if (chat?.lastMessage?.toString() === message._id.toString()) {
+      emitChatUpdate(chat, message);
+    }
+
+    return res.status(200).json({ message });
+  } catch (err) {
+    console.error("editMessage failed:", err.message);
+    return res.status(500).json({ message: "Could not edit message" });
   }
 };
