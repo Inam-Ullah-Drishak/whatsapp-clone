@@ -43,6 +43,15 @@ const chatSchema = new mongoose.Schema(
       ref: "Message",
     },
 
+    // Per-user flags: pinning and archiving are personal, so they're
+    // arrays of user ids rather than booleans on the chat.
+    pinnedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    archivedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+    // "Delete chat" hides it for one person only. A new message clears
+    // the flag so the conversation reappears, with history still hidden.
+    deletedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
     // userId -> number of unread messages, so each participant has their
     // own badge count on the same chat document.
     unreadCounts: {

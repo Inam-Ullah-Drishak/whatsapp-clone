@@ -18,8 +18,48 @@ const withUnreadCount = (chat, userId) => {
   const key = userId ? userId.toString() : null;
   obj.unreadCount = key ? (counts.get ? counts.get(key) : counts[key]) || 0 : 0;
 
+  // Flatten the per-user flags into booleans for this requester
+  const has = (list) =>
+    Boolean(key) && (list || []).some((id) => (id._id ? id._id : id).toString() === key);
+  obj.isPinned = has(chat.pinnedBy);
+  obj.isArchived = has(chat.archivedBy);
+
   delete obj.unreadCounts;
+  delete obj.pinnedBy;
+  delete obj.archivedBy;
   return obj;
+};
+
+/** Toggle a user id in one of the per-user arrays on a chat. */
+const toggleFlag = async (field, req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "Invalid chat id" });
+  }
+
+  const chat = await Chat.findById(id).select(`participants ${field}`);
+  if (!chat) return res.status(404).json({ message: "Chat not found" });
+
+  const isMember = chat.participants.some(
+    (p) => p.toString() === req.user._id.toString()
+  );
+  if (!isMember) {
+    return res.status(403).json({ message: "You are not part of this chat" });
+  }
+
+  const already = (chat[field] || []).some(
+    (u) => u.toString() === req.user._id.toString()
+  );
+
+  await Chat.updateOne(
+    { _id: id },
+    already
+      ? { $pull: { [field]: req.user._id } }
+      : { $addToSet: { [field]: req.user._id } }
+  );
+
+  return res.status(200).json({ [field === "pinnedBy" ? "pinned" : "archived"]: !already });
 };
 
 /**
@@ -62,7 +102,10 @@ export const accessChat = async (req, res) => {
  */
 export const getChats = async (req, res) => {
   try {
-    const chats = await Chat.find({ participants: req.user._id })
+    const chats = await Chat.find({
+      participants: req.user._id,
+      deletedBy: { $ne: req.user._id },
+    })
       .populate("participants", PARTICIPANT_FIELDS)
       .populate({
         path: "lastMessage",
@@ -402,5 +445,74 @@ export const promoteAdmin = async (req, res) => {
   } catch (e) {
     console.error("promoteAdmin failed:", e.message);
     return res.status(500).json({ message: "Could not promote member" });
+  }
+};
+
+
+/** PATCH /api/chats/:id/pin      (toggles) */
+export const togglePin = async (req, res) => {
+  try {
+    return await toggleFlag("pinnedBy", req, res);
+  } catch (err) {
+    console.error("togglePin failed:", err.message);
+    return res.status(500).json({ message: "Could not pin chat" });
+  }
+};
+
+/** PATCH /api/chats/:id/archive  (toggles) */
+export const toggleArchive = async (req, res) => {
+  try {
+    return await toggleFlag("archivedBy", req, res);
+  } catch (err) {
+    console.error("toggleArchive failed:", err.message);
+    return res.status(500).json({ message: "Could not archive chat" });
+  }
+};
+
+
+/**
+ * DELETE /api/chats/:id
+ *
+ * Clears the conversation for the caller only: every message is marked
+ * deleted-for-them and the chat is hidden from their list. The other
+ * participants keep everything. A new message un-hides it.
+ */
+export const deleteChat = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
+
+    const chat = await Chat.findById(id).select("participants");
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
+
+    const isMember = chat.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    const Message = (await import("../models/Message.js")).default;
+
+    await Message.updateMany(
+      { chat: id, deletedFor: { $ne: req.user._id } },
+      { $addToSet: { deletedFor: req.user._id } }
+    );
+
+    await Chat.updateOne(
+      { _id: id },
+      {
+        $addToSet: { deletedBy: req.user._id },
+        $unset: { [`unreadCounts.${req.user._id}`]: "" },
+      }
+    );
+
+    return res.status(200).json({ message: "Chat deleted" });
+  } catch (err) {
+    console.error("deleteChat failed:", err.message);
+    return res.status(500).json({ message: "Could not delete chat" });
   }
 };

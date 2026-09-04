@@ -138,6 +138,27 @@ export const MessageProvider = ({ children }) => {
     setEditingMessage(null);
   }, []);
 
+  const toggleStar = useCallback(
+    async (messageId) => {
+      const { data } = await api.post(`/messages/${messageId}/star`);
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m._id !== messageId) return m;
+          const others = (m.starredBy || []).filter((id) => id !== user._id);
+          return { ...m, starredBy: data.starred ? [...others, user._id] : others };
+        })
+      );
+    },
+    [user]
+  );
+
+  const reactToMessage = useCallback(async (messageId, emoji) => {
+    const { data } = await api.post(`/messages/${messageId}/react`, { emoji });
+    setMessages((prev) =>
+      prev.map((m) => (m._id === messageId ? { ...m, reactions: data.reactions } : m))
+    );
+  }, []);
+
   /* ---- Deleting ---- */
 
   const deleteMessage = useCallback(
@@ -191,6 +212,13 @@ export const MessageProvider = ({ children }) => {
     );
   });
 
+  useSocketEvent("message:reaction", ({ messageId, chatId, reactions }) => {
+    if (chatId !== activeChatIdRef.current) return;
+    setMessages((prev) =>
+      prev.map((m) => (m._id === messageId ? { ...m, reactions } : m))
+    );
+  });
+
   useSocketEvent("message:edited", ({ message }) => {
     if (message.chat !== activeChatIdRef.current) return;
     setMessages((prev) =>
@@ -222,6 +250,8 @@ export const MessageProvider = ({ children }) => {
     editingMessage,
     setEditingMessage,
     editMessage,
+    toggleStar,
+    reactToMessage,
     loadOlder,
     currentUserId: user?._id,
   };

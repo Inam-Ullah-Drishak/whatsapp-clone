@@ -87,6 +87,29 @@ const messageSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Shows the "Forwarded" label, same as WhatsApp
+    isForwarded: {
+      type: Boolean,
+      default: false,
+    },
+
+    // One reaction per person; reacting again replaces it
+    reactions: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        emoji: { type: String },
+        _id: false,
+      },
+    ],
+
+    // Starring is per-user, so it's an array rather than a boolean
+    starredBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

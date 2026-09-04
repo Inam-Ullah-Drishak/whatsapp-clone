@@ -35,8 +35,17 @@ const emitChatUpdate = (chat, lastMessage) => {
  */
 export const sendMessage = async (req, res) => {
   try {
-    const { chatId, content, type = "text", replyTo, mediaUrl, fileName, fileSize, mimeType } =
-      req.body;
+    const {
+      chatId,
+      content,
+      type = "text",
+      replyTo,
+      mediaUrl,
+      fileName,
+      fileSize,
+      mimeType,
+      isForwarded = false,
+    } = req.body;
 
     if (!mongoose.isValidObjectId(chatId)) {
       return res.status(400).json({ message: "Invalid chat id" });
@@ -96,12 +105,16 @@ export const sendMessage = async (req, res) => {
       fileSize,
       mimeType: mimeType || "",
       replyTo: replyTo || null,
+      isForwarded: Boolean(isForwarded),
     });
 
     // Keep the sidebar in sync: preview pointer, badge counts, and
     // updatedAt (which drives chat list ordering).
     chat.lastMessage = message._id;
     chat.bumpUnread(req.user._id);
+    // A new message brings the chat back for anyone who deleted it.
+    // Their old messages stay hidden via deletedFor.
+    chat.deletedBy = [];
     await chat.save();
 
     await message.populate([
@@ -352,5 +365,201 @@ export const editMessage = async (req, res) => {
   } catch (err) {
     console.error("editMessage failed:", err.message);
     return res.status(500).json({ message: "Could not edit message" });
+  }
+};
+
+
+/**
+ * POST /api/messages/:id/star     (toggles)
+ *
+ * Starring is private: only you see your own stars, so this stores the
+ * user id on the message rather than a shared boolean.
+ */
+export const toggleStar = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    const message = await Message.findById(id);
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const chat = await Chat.findById(message.chat).select("participants");
+    const isMember = chat?.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    const already = message.starredBy.some(
+      (u) => u.toString() === req.user._id.toString()
+    );
+
+    await Message.updateOne(
+      { _id: id },
+      already
+        ? { $pull: { starredBy: req.user._id } }
+        : { $addToSet: { starredBy: req.user._id } }
+    );
+
+    return res.status(200).json({ starred: !already });
+  } catch (err) {
+    console.error("toggleStar failed:", err.message);
+    return res.status(500).json({ message: "Could not star message" });
+  }
+};
+
+/**
+ * GET /api/messages/starred/all
+ * Every message you've starred, newest first, across all chats.
+ */
+export const getStarredMessages = async (req, res) => {
+  try {
+    const messages = await Message.find({
+      starredBy: req.user._id,
+      deletedFor: { $ne: req.user._id },
+      isDeletedForEveryone: false,
+    })
+      .populate("sender", SENDER_FIELDS)
+      .populate({ path: "chat", select: "isGroup groupName participants" })
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+    return res.status(200).json({ messages });
+  } catch (err) {
+    console.error("getStarredMessages failed:", err.message);
+    return res.status(500).json({ message: "Could not load starred messages" });
+  }
+};
+
+
+/**
+ * GET /api/messages/search?q=hello&chatId=optional
+ *
+ * Searches only chats the user belongs to, skipping anything they've
+ * deleted. Case-insensitive substring match.
+ */
+export const searchMessages = async (req, res) => {
+  try {
+    const q = (req.query.q || "").trim();
+    const { chatId } = req.query;
+
+    if (q.length < 2) {
+      return res.status(400).json({ message: "Search needs at least 2 characters" });
+    }
+
+    // Escape regex metacharacters so a query like "a+b" is literal
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    let chatFilter;
+    if (chatId) {
+      if (!mongoose.isValidObjectId(chatId)) {
+        return res.status(400).json({ message: "Invalid chat id" });
+      }
+      const chat = await Chat.findById(chatId).select("participants");
+      const isMember = chat?.participants.some(
+        (p) => p.toString() === req.user._id.toString()
+      );
+      if (!isMember) {
+        return res.status(403).json({ message: "You are not part of this chat" });
+      }
+      chatFilter = chatId;
+    } else {
+      // All chats the user is in, minus ones they deleted
+      const chats = await Chat.find({
+        participants: req.user._id,
+        deletedBy: { $ne: req.user._id },
+      }).select("_id");
+      chatFilter = { $in: chats.map((c) => c._id) };
+    }
+
+    const messages = await Message.find({
+      chat: chatFilter,
+      content: { $regex: safe, $options: "i" },
+      deletedFor: { $ne: req.user._id },
+      isDeletedForEveryone: false,
+    })
+      .populate("sender", SENDER_FIELDS)
+      .populate({ path: "chat", select: "isGroup groupName participants" })
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    return res.status(200).json({ messages, query: q });
+  } catch (err) {
+    console.error("searchMessages failed:", err.message);
+    return res.status(500).json({ message: "Search failed" });
+  }
+};
+
+
+/**
+ * Any single emoji is allowed, but the value still has to be validated:
+ * without a check, this field would accept arbitrary strings and the
+ * client would render whatever anyone posted.
+ */
+const isValidEmoji = (value) => {
+  if (typeof value !== "string") return false;
+  if (value.length === 0 || value.length > 12) return false;
+  if (/[a-zA-Z0-9\s]/.test(value)) return false;
+  // At least one character outside the basic multilingual plane or a
+  // known symbol range
+  return /\p{Extended_Pictographic}/u.test(value);
+};
+
+export const reactToMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { emoji } = req.body;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    if (emoji && !isValidEmoji(emoji)) {
+      return res.status(400).json({ message: "Unsupported reaction" });
+    }
+
+    const message = await Message.findById(id);
+    if (!message) return res.status(404).json({ message: "Message not found" });
+
+    const chat = await Chat.findById(message.chat).select("participants");
+    const isMember = chat?.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    const mine = message.reactions.find(
+      (r) => r.user.toString() === req.user._id.toString()
+    );
+
+    // Always drop the existing one first, then add unless it was a toggle-off
+    message.reactions = message.reactions.filter(
+      (r) => r.user.toString() !== req.user._id.toString()
+    );
+
+    const removing = !emoji || mine?.emoji === emoji;
+    if (!removing) {
+      message.reactions.push({ user: req.user._id, emoji });
+    }
+
+    await message.save();
+
+    getIO().to(chatRoom(message.chat.toString())).emit("message:reaction", {
+      messageId: message._id.toString(),
+      chatId: message.chat.toString(),
+      reactions: message.reactions,
+    });
+
+    return res.status(200).json({ reactions: message.reactions });
+  } catch (err) {
+    console.error("reactToMessage failed:", err.message);
+    return res.status(500).json({ message: "Could not react to message" });
   }
 };

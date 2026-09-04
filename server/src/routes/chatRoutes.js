@@ -9,6 +9,9 @@ import {
   addParticipants,
   removeParticipant,
   promoteAdmin,
+  togglePin,
+  toggleArchive,
+  deleteChat,
 } from "../controllers/chatController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -24,6 +27,9 @@ router.get("/", getChats);
 
 router.get("/:id", getChatById);
 router.patch("/:id/read", markChatRead);
+router.patch("/:id/pin", togglePin);
+router.patch("/:id/archive", toggleArchive);
+router.delete("/:id", deleteChat);
 
 // Group management
 router.patch("/:id/group", updateGroup);

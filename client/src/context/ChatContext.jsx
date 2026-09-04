@@ -71,6 +71,26 @@ export const ChatProvider = ({ children }) => {
     []
   );
 
+  const togglePin = useCallback(async (chatId) => {
+    const { data } = await api.patch(`/chats/${chatId}/pin`);
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId ? { ...c, isPinned: data.pinned } : c))
+    );
+  }, []);
+
+  const toggleArchive = useCallback(async (chatId) => {
+    const { data } = await api.patch(`/chats/${chatId}/archive`);
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId ? { ...c, isArchived: data.archived } : c))
+    );
+  }, []);
+
+  const deleteChat = useCallback(async (chatId) => {
+    await api.delete(`/chats/${chatId}`);
+    setChats((prev) => prev.filter((c) => c._id !== chatId));
+    setActiveChatId((cur) => (cur === chatId ? null : cur));
+  }, []);
+
   /* ---- Live updates ---- */
 
   // Fired whenever a message lands in any of your chats
@@ -146,6 +166,9 @@ export const ChatProvider = ({ children }) => {
     selectChat,
     setActiveChatId,
     openChatWith,
+    togglePin,
+    toggleArchive,
+    deleteChat,
     loadChats,
     loading,
     error,

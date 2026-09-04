@@ -5,6 +5,10 @@ import {
   markMessagesRead,
   deleteMessage,
   editMessage,
+  toggleStar,
+  getStarredMessages,
+  searchMessages,
+  reactToMessage,
 } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -13,6 +17,12 @@ const router = express.Router();
 router.use(protect);
 
 router.post("/", sendMessage);
+
+// Literal path first, or "starred" is read as a :chatId
+router.get("/starred/all", getStarredMessages);
+router.get("/search/all", searchMessages);
+router.post("/:id/star", toggleStar);
+router.post("/:id/react", reactToMessage);
 router.delete("/:id", deleteMessage);
 router.patch("/:id", editMessage);
 
