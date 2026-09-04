@@ -54,9 +54,9 @@ export default function StatusPanel() {
   const lastOf = (group) => group.items[group.items.length - 1];
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-neutral-200 bg-white sm:w-96">
+    <aside className="flex h-full w-full flex-col border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 sm:w-96">
       <header className="flex items-center justify-between px-5 pb-3 pt-5">
-        <h1 className="text-xl font-semibold text-neutral-900">Status</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Status</h1>
         <button
           onClick={() => setComposing(true)}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700"
@@ -73,7 +73,7 @@ export default function StatusPanel() {
         {/* Your own */}
         <button
           onClick={() => (mine ? setViewing({ group: mine, index: 0 }) : setComposing(true))}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
         >
           {mine ? (
             <StatusRing
@@ -94,8 +94,8 @@ export default function StatusPanel() {
           )}
 
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium text-neutral-900">My status</p>
-            <p className="truncate text-sm text-neutral-500">
+            <p className="truncate font-medium text-neutral-900 dark:text-neutral-100">My status</p>
+            <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
               {mine
                 ? `${mine.items.length} update${mine.items.length > 1 ? "s" : ""} · ${formatChatTime(lastOf(mine).createdAt)}`
                 : "Tap to add a status update"}
@@ -104,17 +104,17 @@ export default function StatusPanel() {
         </button>
 
         {others.length > 0 && (
-          <p className="px-5 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <p className="px-5 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             Recent updates
           </p>
         )}
 
         {loading && others.length === 0 && (
-          <p className="px-5 py-6 text-sm text-neutral-400">Loading...</p>
+          <p className="px-5 py-6 text-sm text-neutral-400 dark:text-neutral-500">Loading...</p>
         )}
 
         {!loading && others.length === 0 && (
-          <p className="px-5 py-6 text-sm text-neutral-400">
+          <p className="px-5 py-6 text-sm text-neutral-400 dark:text-neutral-500">
             No status updates from your contacts yet.
           </p>
         )}
@@ -128,7 +128,7 @@ export default function StatusPanel() {
                 index: Math.max(0, group.items.findIndex((i) => !i.seen)),
               })
             }
-            className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
           >
             <StatusRing
               src={mediaUrl(group.user.avatar)}
@@ -137,10 +137,10 @@ export default function StatusPanel() {
               unseen={group.hasUnseen}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium text-neutral-900">
+              <p className="truncate font-medium text-neutral-900 dark:text-neutral-100">
                 {group.user.name || group.user.phone}
               </p>
-              <p className="truncate text-sm text-neutral-500">
+              <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
                 {formatChatTime(lastOf(group).createdAt)}
               </p>
             </div>

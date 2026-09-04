@@ -3,6 +3,7 @@ import { useMessages } from "../context/MessageContext.jsx";
 import { useChats } from "../context/ChatContext.jsx";
 import { useSocket } from "../context/SocketContext.jsx";
 import api, { errorMessage, mediaUrl } from "../lib/api.js";
+import { EMOJI_GROUPS } from "../lib/emoji.js";
 
 const TYPING_TIMEOUT = 2000;
 
@@ -30,6 +31,9 @@ export default function Composer() {
   const [uploading, setUploading] = useState(false);
   const [attachment, setAttachment] = useState(null);
   const [error, setError] = useState("");
+
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiRef = useRef(null);
 
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -130,6 +134,41 @@ export default function Composer() {
   const mmss = (s) =>
     `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
+  // Close the emoji panel on an outside click
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const close = (e) => {
+      if (!emojiRef.current?.contains(e.target)) setEmojiOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [emojiOpen]);
+
+  /**
+   * Insert at the caret rather than appending, so adding an emoji
+   * mid-sentence works and the cursor stays where the user expects.
+   */
+  const insertEmoji = (emoji) => {
+    const input = inputRef.current;
+    if (!input) {
+      setText((t) => t + emoji);
+      return;
+    }
+
+    const start = input.selectionStart ?? text.length;
+    const end = input.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + emoji + text.slice(end);
+
+    setText(next);
+
+    // Restore the caret after React re-renders the value
+    requestAnimationFrame(() => {
+      input.focus();
+      const pos = start + emoji.length;
+      input.setSelectionRange(pos, pos);
+    });
+  };
+
   const stopTyping = () => {
     clearTimeout(timerRef.current);
     if (typingRef.current) {
@@ -223,21 +262,21 @@ export default function Composer() {
   };
 
   return (
-    <div className="border-t border-neutral-200 bg-neutral-100">
+    <div className="border-t border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
       {error && <p className="px-4 pt-2 text-sm text-red-600">{error}</p>}
 
       {editingMessage && (
-        <div className="flex items-start gap-3 border-l-4 border-amber-500 bg-white px-4 py-2">
+        <div className="flex items-start gap-3 border-l-4 border-amber-500 bg-white dark:bg-neutral-900 px-4 py-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-amber-600">Editing message</p>
-            <p className="truncate text-sm text-neutral-600">
+            <p className="truncate text-sm text-neutral-600 dark:text-neutral-300">
               {editingMessage.content}
             </p>
           </div>
           <button
             type="button"
             onClick={cancelEdit}
-            className="text-xl leading-none text-neutral-400 hover:text-neutral-700"
+            className="text-xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
             aria-label="Cancel edit"
           >
             &times;
@@ -246,19 +285,19 @@ export default function Composer() {
       )}
 
       {replyingTo && (
-        <div className="flex items-start gap-3 border-l-4 border-emerald-600 bg-white px-4 py-2">
+        <div className="flex items-start gap-3 border-l-4 border-emerald-600 bg-white dark:bg-neutral-900 px-4 py-2">
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-emerald-700">
+            <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
               Replying to {replyingTo.sender?.name || "Unknown"}
             </p>
-            <p className="truncate text-sm text-neutral-600">
+            <p className="truncate text-sm text-neutral-600 dark:text-neutral-300">
               {replyingTo.content || replyingTo.fileName || "Attachment"}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setReplyingTo(null)}
-            className="text-xl leading-none text-neutral-400 hover:text-neutral-700"
+            className="text-xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
             aria-label="Cancel reply"
           >
             &times;
@@ -275,27 +314,27 @@ export default function Composer() {
               className="h-16 w-16 rounded object-cover"
             />
           ) : attachment.type === "audio" ? (
-            <div className="flex h-16 w-16 items-center justify-center rounded bg-emerald-100 text-emerald-700">
+            <div className="flex h-16 w-16 items-center justify-center rounded bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <rect x="9" y="2" width="6" height="12" rx="3" />
                 <path d="M5 10a7 7 0 0 0 14 0M12 17v5" />
               </svg>
             </div>
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded bg-neutral-200 text-xs uppercase text-neutral-500">
+            <div className="flex h-16 w-16 items-center justify-center rounded bg-neutral-200 dark:bg-neutral-700 text-xs uppercase text-neutral-500 dark:text-neutral-400">
               {attachment.type}
             </div>
           )}
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm text-neutral-800">{attachment.fileName}</p>
-            <p className="text-xs text-neutral-500">{prettySize(attachment.fileSize)}</p>
+            <p className="truncate text-sm text-neutral-800 dark:text-neutral-200">{attachment.fileName}</p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{prettySize(attachment.fileSize)}</p>
           </div>
 
           <button
             type="button"
             onClick={() => setAttachment(null)}
-            className="text-xl leading-none text-neutral-400 hover:text-neutral-700"
+            className="text-xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
             aria-label="Remove attachment"
           >
             &times;
@@ -308,7 +347,7 @@ export default function Composer() {
           <button
             type="button"
             onClick={() => stopRecording(false)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-200 hover:text-red-600"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-red-600"
             title="Discard"
             aria-label="Discard recording"
           >
@@ -318,11 +357,11 @@ export default function Composer() {
           </button>
 
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
-          <span className="font-mono text-sm tabular-nums text-neutral-700">
+          <span className="font-mono text-sm tabular-nums text-neutral-700 dark:text-neutral-300">
             {mmss(seconds)}
           </span>
 
-          <span className="flex-1 text-sm text-neutral-400">
+          <span className="flex-1 text-sm text-neutral-400 dark:text-neutral-500">
             Recording — tap send when you're done
           </span>
 
@@ -340,11 +379,52 @@ export default function Composer() {
         </div>
       ) : (
       <form onSubmit={submit} className="flex items-end gap-2 px-4 py-3">
+        <div ref={emojiRef} className="relative shrink-0">
+          <button
+            type="button"
+            onClick={() => setEmojiOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            title="Emoji"
+            aria-label="Emoji"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="12" cy="12" r="9" />
+              <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
+              <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
+              <path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          {emojiOpen && (
+            <div className="absolute bottom-12 left-0 z-30 max-h-72 w-80 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-2 shadow-lg">
+              {EMOJI_GROUPS.map((group) => (
+                <div key={group.name} className="mb-2 last:mb-0">
+                  <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                    {group.name}
+                  </p>
+                  <div className="grid grid-cols-9 gap-0.5">
+                    {group.emoji.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => insertEmoji(emoji)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading || Boolean(editingMessage)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-200 disabled:opacity-40"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40"
           title="Attach a file"
           aria-label="Attach a file"
         >
@@ -369,7 +449,7 @@ export default function Composer() {
               ? "Uploading..."
               : "Type a message"
           }
-          className="max-h-32 flex-1 resize-none rounded-lg bg-white px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
+          className="max-h-32 flex-1 resize-none rounded-lg bg-white dark:bg-neutral-900 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
         />
 
         {!text.trim() && !attachment && !editingMessage ? (

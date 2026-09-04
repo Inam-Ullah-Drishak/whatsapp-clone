@@ -37,7 +37,7 @@ export default function DisappearingSelect({ chat, disabled }) {
 
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+      <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         Disappearing messages
       </p>
 
@@ -45,7 +45,7 @@ export default function DisappearingSelect({ chat, disabled }) {
         value={chat.disappearingAfter || 0}
         onChange={(e) => change(Number(e.target.value))}
         disabled={disabled || busy}
-        className="mt-1 w-full rounded-lg bg-neutral-100 px-3 py-2 text-sm outline-none disabled:opacity-50"
+        className="mt-1 w-full rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-2 text-sm text-neutral-800 outline-none focus:border-emerald-500 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-100"
       >
         {DURATIONS.map((d) => (
           <option key={d.hours} value={d.hours}>
@@ -54,14 +54,14 @@ export default function DisappearingSelect({ chat, disabled }) {
         ))}
       </select>
 
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
         {chat.disappearingAfter
           ? "New messages will be removed after this time. Existing ones are unaffected."
           : "Messages stay until someone deletes them."}
       </p>
 
       {disabled && (
-        <p className="mt-1 text-xs text-neutral-400">Only group admins can change this.</p>
+        <p className="mt-1 text-xs text-neutral-400 dark:text-neutral-500">Only group admins can change this.</p>
       )}
 
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

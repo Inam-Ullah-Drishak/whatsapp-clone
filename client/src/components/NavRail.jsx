@@ -2,6 +2,7 @@ import { mediaUrl } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useChats } from "../context/ChatContext.jsx";
 import { useStatus } from "../context/StatusContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
 import Avatar from "./Avatar.jsx";
 
 const Icon = ({ path, filled = false }) => (
@@ -26,8 +27,8 @@ function RailButton({ active, onClick, title, badge, children }) {
       aria-label={title}
       className={`relative flex h-11 w-11 items-center justify-center rounded-lg transition ${
         active
-          ? "bg-neutral-200 text-neutral-900"
-          : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800"
+          ? "bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100"
+          : "text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-100"
       }`}
     >
       {children}
@@ -44,6 +45,7 @@ export default function NavRail({ panel, setPanel, onOpenProfile, onOpenStarred 
   const { user } = useAuth();
   const { chats } = useChats();
   const { others } = useStatus();
+  const { theme, toggle } = useTheme();
 
   const unreadTotal = chats
     .filter((c) => !c.isMuted)
@@ -52,7 +54,7 @@ export default function NavRail({ panel, setPanel, onOpenProfile, onOpenStarred 
   const unseenStatus = others.filter((g) => g.hasUnseen).length;
 
   return (
-    <nav className="flex h-full w-16 shrink-0 flex-col items-center justify-between border-r border-neutral-200 bg-neutral-50 py-3">
+    <nav className="flex h-full w-16 shrink-0 flex-col items-center justify-between border-r border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 py-3">
       <div className="flex flex-col items-center gap-1">
         <RailButton
           active={panel === "chats"}
@@ -84,14 +86,27 @@ export default function NavRail({ panel, setPanel, onOpenProfile, onOpenStarred 
         </RailButton>
       </div>
 
-      <button
+      <div className="flex flex-col items-center gap-1">
+        <RailButton
+          onClick={toggle}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? (
+            <Icon path={<><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>} />
+          ) : (
+            <Icon path={<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />} />
+          )}
+        </RailButton>
+
+        <button
         onClick={onOpenProfile}
         title="Profile"
         aria-label="Profile"
         className="rounded-full transition hover:opacity-80"
       >
         <Avatar src={mediaUrl(user?.avatar)} name={user?.name || user?.phone} size="sm" />
-      </button>
+        </button>
+      </div>
     </nav>
   );
 }

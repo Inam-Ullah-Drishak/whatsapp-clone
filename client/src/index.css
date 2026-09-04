@@ -1,1 +1,42 @@
 @import "tailwindcss";
+
+/* Tailwind v4 follows the OS by default. This makes `dark:` respond to a
+   class on <html> instead, so the in-app toggle can override the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Values used by inline styles, which can't use Tailwind classes. */
+:root {
+  /* Tells the browser to draw native controls — select dropdowns,
+     scrollbars, date pickers — in the matching theme. Without this the
+     options list stays light grey on a dark page. */
+  color-scheme: light;
+
+  --wa-chat-bg: #efeae2;
+  --wa-bubble-mine: #d9fdd3;
+  --wa-bubble-theirs: #ffffff;
+  --wa-meta: #667781;
+  --wa-icon: #3b4a54;
+  --wa-bar-idle: #9aa3a8;
+  --wa-bar-played: #667781;
+  --wa-chip-bg: #ffffff;
+  --wa-scrim: rgba(255, 255, 255, 0.75);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --wa-chat-bg: #0b141a;
+  --wa-bubble-mine: #005c4b;
+  --wa-bubble-theirs: #202c33;
+  --wa-meta: #8696a0;
+  --wa-icon: #d1d7db;
+  --wa-bar-idle: #54656f;
+  --wa-bar-played: #d1d7db;
+  --wa-chip-bg: #202c33;
+  --wa-scrim: rgba(0, 0, 0, 0.55);
+}
+
+/* Text inside bubbles follows the theme */
+.dark .wa-bubble-text {
+  color: #e9edef;
+}

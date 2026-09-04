@@ -105,12 +105,15 @@ export default function ChatWindow() {
   let lastDay = null;
 
   return (
-    <section className="flex h-full flex-1 flex-col bg-[#efeae2]">
-      <header className="flex items-center gap-2 border-b border-neutral-200 bg-neutral-100 px-3 py-2.5">
+    <section
+      className="flex h-full flex-1 flex-col"
+      style={{ background: "var(--wa-chat-bg)" }}
+    >
+      <header className="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-3 py-2.5">
         {/* Mobile only: the sidebar is hidden once a chat is open */}
         <button
           onClick={() => setActiveChatId(null)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 transition hover:bg-neutral-200 sm:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-neutral-600 dark:text-neutral-300 transition hover:bg-neutral-200 dark:hover:bg-neutral-700 sm:hidden"
           aria-label="Back to chats"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -120,7 +123,7 @@ export default function ChatWindow() {
 
         <button
           onClick={() => setShowInfo(true)}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-neutral-200"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded px-1 py-0.5 text-left transition hover:bg-neutral-200 dark:hover:bg-neutral-700"
           title={activeChat?.isGroup ? "Group info" : "Contact info"}
         >
           <Avatar
@@ -130,23 +133,23 @@ export default function ChatWindow() {
             online={other?.isOnline}
           />
           <div className="min-w-0">
-            <p className="flex items-center gap-1.5 truncate font-medium text-neutral-900">
+            <p className="flex items-center gap-1.5 truncate font-medium text-neutral-900 dark:text-neutral-100">
               {name}
               {activeChat?.disappearingAfter > 0 && (
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 2" strokeLinecap="round" />
                 </svg>
               )}
             </p>
-            <p className="truncate text-xs text-neutral-500">{subtitle()}</p>
+            <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{subtitle()}</p>
           </div>
         </button>
 
         <div className="flex items-center gap-1">
           <button
             onClick={() => activeChat?.isGroup || other ? setShowInfo(true) : null}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-800"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-800 dark:hover:text-neutral-100"
             title="Chat info"
             aria-label="Chat info"
           >
@@ -173,15 +176,15 @@ export default function ChatWindow() {
 
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 space-y-1 overflow-y-auto py-4">
         {loadingOlder && (
-          <p className="py-2 text-center text-xs text-neutral-500">Loading older messages...</p>
+          <p className="py-2 text-center text-xs text-neutral-500 dark:text-neutral-400">Loading older messages...</p>
         )}
 
         {loading && (
-          <p className="py-8 text-center text-sm text-neutral-500">Loading...</p>
+          <p className="py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">Loading...</p>
         )}
 
         {!loading && messages.length === 0 && (
-          <p className="py-10 text-center text-sm text-neutral-500">
+          <p className="py-10 text-center text-sm text-neutral-500 dark:text-neutral-400">
             No messages yet. Say hello.
           </p>
         )}
@@ -195,7 +198,7 @@ export default function ChatWindow() {
             <div key={m._id} className="space-y-1">
               {showDay && (
                 <div className="flex justify-center py-2">
-                  <span className="rounded bg-white/80 px-3 py-1 text-xs text-neutral-500 shadow-sm">
+                  <span className="rounded px-3 py-1 text-xs text-neutral-500 shadow-sm dark:text-neutral-400" style={{ background: "var(--wa-bubble-theirs)" }}>
                     {day}
                   </span>
                 </div>
@@ -214,13 +217,13 @@ export default function ChatWindow() {
       </div>
 
       {iBlockedThem ? (
-        <div className="border-t border-neutral-200 bg-neutral-100 px-4 py-4 text-center">
-          <p className="text-sm text-neutral-600">
+        <div className="border-t border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-4 py-4 text-center">
+          <p className="text-sm text-neutral-600 dark:text-neutral-300">
             You blocked {name}. Unblock to send messages.
           </p>
           <button
             onClick={() => setShowInfo(true)}
-            className="mt-1 text-sm font-medium text-emerald-700 hover:underline"
+            className="mt-1 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
           >
             Open contact info
           </button>

@@ -152,15 +152,15 @@ export default function GroupInfoModal({ chat, onClose }) {
       onClick={onClose}
     >
       <div
-        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white shadow-lg"
+        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white dark:bg-neutral-900 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-neutral-100 p-6 pb-4">
+        <div className="border-b border-neutral-100 dark:border-neutral-800 p-6 pb-4">
           <div className="flex items-start justify-between">
-            <h2 className="text-lg font-medium text-neutral-900">Group info</h2>
+            <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Group info</h2>
             <button
               onClick={onClose}
-              className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+              className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
               aria-label="Close"
             >
               &times;
@@ -208,11 +208,11 @@ export default function GroupInfoModal({ chat, onClose }) {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <p className="text-lg font-medium text-neutral-900">{chat.groupName}</p>
+                <p className="text-lg font-medium text-neutral-900 dark:text-neutral-100">{chat.groupName}</p>
                 {iAmAdmin && (
                   <button
                     onClick={() => setEditingName(true)}
-                    className="text-sm text-emerald-700 hover:underline"
+                    className="text-sm text-emerald-700 dark:text-emerald-300 hover:underline"
                   >
                     Edit
                   </button>
@@ -227,7 +227,7 @@ export default function GroupInfoModal({ chat, onClose }) {
             <DisappearingSelect chat={chat} disabled={!iAmAdmin} />
           </div>
 
-          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {chat.participants?.length || 0} members
           </p>
 
@@ -237,7 +237,7 @@ export default function GroupInfoModal({ chat, onClose }) {
               return (
                 <div
                   key={p._id}
-                  className="flex items-center gap-3 rounded-lg p-2 hover:bg-neutral-50"
+                  className="flex items-center gap-3 rounded-lg p-2 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 >
                   <Avatar
                     src={mediaUrl(p.avatar)}
@@ -246,14 +246,14 @@ export default function GroupInfoModal({ chat, onClose }) {
                     online={p.isOnline}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-neutral-800">
+                    <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                       {isMe ? "You" : p.name || p.phone}
                     </p>
-                    <p className="truncate text-xs text-neutral-500">{p.phone}</p>
+                    <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{p.phone}</p>
                   </div>
 
                   {isAdmin(p._id) && (
-                    <span className="shrink-0 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                    <span className="shrink-0 rounded bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
                       Admin
                     </span>
                   )}
@@ -264,7 +264,7 @@ export default function GroupInfoModal({ chat, onClose }) {
                         <button
                           onClick={() => promote(p._id)}
                           disabled={busy}
-                          className="rounded px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 disabled:opacity-40"
+                          className="rounded px-2 py-1 text-xs text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-100 disabled:opacity-40"
                           title="Make admin"
                         >
                           Promote
@@ -273,7 +273,7 @@ export default function GroupInfoModal({ chat, onClose }) {
                       <button
                         onClick={() => removeMember(p._id)}
                         disabled={busy}
-                        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-40"
+                        className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-40"
                       >
                         Remove
                       </button>
@@ -286,13 +286,13 @@ export default function GroupInfoModal({ chat, onClose }) {
 
           {iAmAdmin &&
             (showAdd ? (
-              <div className="mt-4 border-t border-neutral-100 pt-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+              <div className="mt-4 border-t border-neutral-100 dark:border-neutral-800 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                   Add from your contacts
                 </p>
 
                 {candidates.length === 0 && (
-                  <p className="mt-2 text-sm text-neutral-400">
+                  <p className="mt-2 text-sm text-neutral-400 dark:text-neutral-500">
                     Everyone you chat with is already in this group.
                   </p>
                 )}
@@ -303,7 +303,7 @@ export default function GroupInfoModal({ chat, onClose }) {
                       key={person._id}
                       onClick={() => addById(person._id)}
                       disabled={busy}
-                      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition hover:bg-neutral-50 disabled:opacity-40"
+                      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-40"
                     >
                       <Avatar
                         src={mediaUrl(person.avatar)}
@@ -312,12 +312,12 @@ export default function GroupInfoModal({ chat, onClose }) {
                         online={person.isOnline}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-neutral-800">
+                        <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                           {person.name || person.phone}
                         </p>
-                        <p className="truncate text-xs text-neutral-500">{person.phone}</p>
+                        <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{person.phone}</p>
                       </div>
-                      <span className="shrink-0 text-sm font-medium text-emerald-700">Add</span>
+                      <span className="shrink-0 text-sm font-medium text-emerald-700 dark:text-emerald-300">Add</span>
                     </button>
                   ))}
                 </div>
@@ -327,12 +327,12 @@ export default function GroupInfoModal({ chat, onClose }) {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Or add by phone number"
-                    className="flex-1 rounded-lg bg-neutral-100 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
+                    className="flex-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
                   />
                   <button
                     type="submit"
                     disabled={busy || phone.trim().length < 8}
-                    className="rounded-lg bg-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-300 disabled:opacity-40"
+                    className="rounded-lg bg-neutral-200 dark:bg-neutral-700 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 disabled:opacity-40"
                   >
                     Add
                   </button>
@@ -340,7 +340,7 @@ export default function GroupInfoModal({ chat, onClose }) {
 
                 <button
                   onClick={() => setShowAdd(false)}
-                  className="mt-2 text-sm text-neutral-500 hover:text-neutral-800"
+                  className="mt-2 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100"
                 >
                   Cancel
                 </button>
@@ -348,7 +348,7 @@ export default function GroupInfoModal({ chat, onClose }) {
             ) : (
               <button
                 onClick={() => setShowAdd(true)}
-                className="mt-4 text-sm font-medium text-emerald-700 hover:underline"
+                className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
               >
                 + Add member
               </button>
@@ -357,11 +357,11 @@ export default function GroupInfoModal({ chat, onClose }) {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="space-y-2 border-t border-neutral-100 p-6 pt-4">
+        <div className="space-y-2 border-t border-neutral-100 dark:border-neutral-800 p-6 pt-4">
           <button
             onClick={leave}
             disabled={busy}
-            className="w-full rounded border border-neutral-300 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50 disabled:opacity-40"
+            className="w-full rounded border border-neutral-300 dark:border-neutral-600 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 transition hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-40"
           >
             Leave group
           </button>

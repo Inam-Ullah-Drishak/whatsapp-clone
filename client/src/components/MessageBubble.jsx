@@ -12,7 +12,7 @@ const time = (value) =>
 
 /** Single tick = sent, double = delivered, blue double = read. */
 function Ticks({ status }) {
-  if (status === "sending") return <span className="text-[10px] text-neutral-400">...</span>;
+  if (status === "sending") return <span className="text-[10px] text-neutral-400 dark:text-neutral-500">...</span>;
   if (status === "failed")
     return <span className="text-[10px] font-medium text-red-500">failed</span>;
 
@@ -22,7 +22,7 @@ function Ticks({ status }) {
   return (
     <svg
       viewBox="0 0 18 12"
-      className={`h-3.5 w-4 ${blue ? "text-sky-500" : "text-neutral-400"}`}
+      className={`h-3.5 w-4 ${blue ? "text-sky-500" : "text-neutral-400 dark:text-neutral-500"}`}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.6"
@@ -152,7 +152,9 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
         className={`relative max-w-[75%] rounded-lg px-3 py-2 shadow-sm transition sm:max-w-[65%] ${
           highlighted ? "ring-2 ring-amber-400" : ""
         }`}
-        style={{ background: mine ? "#d9fdd3" : "#ffffff" }}
+        style={{
+          background: mine ? "var(--wa-bubble-mine)" : "var(--wa-bubble-theirs)",
+        }}
       >
         {!deleted && (
           <div
@@ -163,7 +165,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
           >
             <button
               onClick={() => setReactOpen((v) => !v)}
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-neutral-400 transition hover:bg-black/5 hover:text-neutral-600 ${
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-neutral-400 dark:text-neutral-500 transition hover:bg-black/5 hover:text-neutral-600 ${
                 reactOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               }`}
               title="React"
@@ -179,7 +181,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
 
             {reactOpen && (
               <div
-                className={`absolute bottom-9 z-30 flex items-center gap-1 rounded-full border border-neutral-200 bg-white px-2 py-1.5 shadow-lg ${
+                className={`absolute bottom-9 z-30 flex items-center gap-1 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-2 py-1.5 shadow-lg ${
                   mine ? "right-0" : "left-0"
                 }`}
               >
@@ -191,7 +193,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                       setReactOpen(false);
                     }}
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-xl leading-none transition hover:scale-125 ${
-                      myReaction === emoji ? "bg-emerald-100" : ""
+                      myReaction === emoji ? "bg-emerald-100 dark:bg-emerald-900/40" : ""
                     }`}
                   >
                     {emoji}
@@ -200,7 +202,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
 
                 <button
                   onClick={() => setMoreOpen((v) => !v)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-100"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   title="More emoji"
                   aria-label="More emoji"
                 >
@@ -211,13 +213,13 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
 
                 {moreOpen && (
                   <div
-                    className={`absolute bottom-12 max-h-72 w-72 overflow-y-auto rounded-xl border border-neutral-200 bg-white p-2 shadow-lg ${
+                    className={`absolute bottom-12 max-h-72 w-72 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-2 shadow-lg ${
                       mine ? "right-0" : "left-0"
                     }`}
                   >
                     {EMOJI_GROUPS.map((group) => (
                       <div key={group.name} className="mb-2 last:mb-0">
-                        <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400">
+                        <p className="px-1 pb-1 text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
                           {group.name}
                         </p>
                         <div className="grid grid-cols-8 gap-0.5">
@@ -229,8 +231,8 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                                 setReactOpen(false);
                                 setMoreOpen(false);
                               }}
-                              className={`flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-neutral-100 ${
-                                myReaction === emoji ? "bg-emerald-100" : ""
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg text-xl leading-none transition hover:bg-neutral-100 dark:hover:bg-neutral-800 ${
+                                myReaction === emoji ? "bg-emerald-100 dark:bg-emerald-900/40" : ""
                               }`}
                             >
                               {emoji}
@@ -259,7 +261,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                 }
                 setMenuOpen((v) => !v);
               }}
-              className={`flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 transition hover:text-neutral-800 ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:text-neutral-800 dark:hover:text-neutral-100 ${
                 menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
               }`}
               style={
@@ -267,8 +269,8 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                 // scrim behind the icon only in that case
                 hasMedia
                   ? {
-                      background: "rgba(255,255,255,0.75)",
-                      color: "#3b4a54",
+                      background: "var(--wa-scrim)",
+                      color: "var(--wa-icon)",
                     }
                   : undefined
               }
@@ -289,7 +291,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
 
             {menuOpen && (
               <div
-                className={`absolute z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-sm shadow-lg ${
+                className={`absolute z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 py-1 text-sm shadow-lg ${
                   mine ? "right-0" : "left-0"
                 } ${dropUp ? "bottom-7" : "top-7"}`}
               >
@@ -298,7 +300,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                     setReplyingTo(message);
                     setMenuOpen(false);
                   }}
-                  className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                  className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
                   Reply
                 </button>
@@ -308,7 +310,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                     toggleStar(message._id);
                     setMenuOpen(false);
                   }}
-                  className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                  className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
                   {starred ? "Unstar" : "Star"}
                 </button>
@@ -318,7 +320,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                     setForwarding(true);
                     setMenuOpen(false);
                   }}
-                  className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                  className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
                   Forward
                 </button>
@@ -329,7 +331,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                       setInfoOpen(true);
                       setMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     Info
                   </button>
@@ -341,7 +343,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                       setEditingMessage(message);
                       setMenuOpen(false);
                     }}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     Edit
                   </button>
@@ -350,7 +352,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                 {hasMedia && (
                   <button
                     onClick={download}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     Download
                   </button>
@@ -359,7 +361,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                 <button
                   onClick={() => remove("me")}
                   disabled={busy}
-                  className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100 disabled:opacity-50"
+                  className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-50"
                 >
                   Delete for me
                 </button>
@@ -368,7 +370,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                   <button
                     onClick={() => remove("everyone")}
                     disabled={busy}
-                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
                   >
                     Delete for everyone
                   </button>
@@ -379,13 +381,13 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
         )}
 
         {showSender && !mine && (
-          <p className="mb-0.5 pr-6 text-xs font-medium text-teal-700">
+          <p className="mb-0.5 pr-6 text-xs font-medium text-teal-700 dark:text-teal-300">
             {message.sender?.name || "Unknown"}
           </p>
         )}
 
         {message.isForwarded && !deleted && (
-          <p className="mb-0.5 flex items-center gap-1 text-xs italic text-neutral-400">
+          <p className="mb-0.5 flex items-center gap-1 text-xs italic text-neutral-400 dark:text-neutral-500">
             <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 17H5a2 2 0 0 1-2-2V9m0 0 4-4M3 9h12a4 4 0 0 1 4 4v4" />
             </svg>
@@ -395,10 +397,10 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
 
         {message.replyTo && !deleted && (
           <div className="mb-1.5 border-l-4 border-teal-600 bg-black/5 px-2 py-1">
-            <p className="text-xs font-medium text-teal-700">
+            <p className="text-xs font-medium text-teal-700 dark:text-teal-300">
               {message.replyTo.sender?.name || "Unknown"}
             </p>
-            <p className="truncate text-xs text-neutral-600">
+            <p className="truncate text-xs text-neutral-600 dark:text-neutral-300">
               {message.replyTo.isDeletedForEveryone
                 ? "This message was deleted"
                 : message.replyTo.content ||
@@ -408,7 +410,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
         )}
 
         {deleted ? (
-          <p className="text-sm italic text-neutral-400">This message was deleted</p>
+          <p className="text-sm italic text-neutral-400 dark:text-neutral-500">This message was deleted</p>
         ) : (
           <>
             {message.type === "image" && message.mediaUrl && (
@@ -432,9 +434,9 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                       </svg>
                     )}
                     {message.editedAt && (
-                      <span className="text-[11px] italic text-neutral-400">edited</span>
+                      <span className="text-[11px] italic text-neutral-400 dark:text-neutral-500">edited</span>
                     )}
-                    <span className="text-[11px] text-neutral-400">
+                    <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
                       {time(message.createdAt)}
                     </span>
                     {mine && <Ticks status={message.status} />}
@@ -448,14 +450,14 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                 href={mediaUrl(message.mediaUrl)}
                 target="_blank"
                 rel="noreferrer"
-                className="mb-1 block rounded bg-black/5 px-3 py-2 text-sm text-teal-800 underline"
+                className="mb-1 block rounded bg-black/5 px-3 py-2 text-sm text-teal-800 dark:text-teal-200 underline"
               >
                 {message.fileName || "Attachment"}
               </a>
             )}
 
             {message.content && (
-              <p className="whitespace-pre-wrap break-words pr-6 text-sm text-neutral-800">
+              <p className="wa-bubble-text whitespace-pre-wrap break-words pr-6 text-sm text-neutral-800">
                 {message.content}
               </p>
             )}
@@ -481,15 +483,15 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
                   padding: count > 1 ? "0 7px" : 0,
                   borderRadius: 9999,
                   border: "none",
-                  background: "#ffffff",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+                  background: "var(--wa-chip-bg)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                   cursor: "pointer",
                   lineHeight: 1,
                 }}
               >
                 <span style={{ fontSize: 13, lineHeight: 1 }}>{emoji}</span>
                 {count > 1 && (
-                  <span style={{ fontSize: 11, color: "#667781" }}>{count}</span>
+                  <span style={{ fontSize: 11, color: "var(--wa-meta)" }}>{count}</span>
                 )}
               </button>
             ))}
@@ -504,9 +506,9 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
             </svg>
           )}
           {message.editedAt && !deleted && (
-            <span className="text-[11px] italic text-neutral-400">edited</span>
+            <span className="text-[11px] italic text-neutral-400 dark:text-neutral-500">edited</span>
           )}
-          <span className="text-[11px] text-neutral-400">{time(message.createdAt)}</span>
+          <span className="text-[11px] text-neutral-400 dark:text-neutral-500">{time(message.createdAt)}</span>
           {mine && !deleted && <Ticks status={message.status} />}
         </div>
         )}

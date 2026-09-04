@@ -42,15 +42,15 @@ export default function ContactInfoModal({ person, chat, onClose }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white shadow-lg"
+        className="w-full max-w-md rounded-lg bg-white dark:bg-neutral-900 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-neutral-100 p-6 pb-5">
+        <div className="border-b border-neutral-100 dark:border-neutral-800 p-6 pb-5">
           <div className="flex items-start justify-between">
-            <h2 className="text-lg font-medium text-neutral-900">Contact info</h2>
+            <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Contact info</h2>
             <button
               onClick={onClose}
-              className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+              className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
               aria-label="Close"
             >
               &times;
@@ -64,10 +64,10 @@ export default function ContactInfoModal({ person, chat, onClose }) {
               size="lg"
               online={person.isOnline}
             />
-            <p className="mt-1 text-lg font-medium text-neutral-900">
+            <p className="mt-1 text-lg font-medium text-neutral-900 dark:text-neutral-100">
               {person.name || person.phone}
             </p>
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
               {person.isOnline
                 ? "online"
                 : person.lastSeen
@@ -79,23 +79,23 @@ export default function ContactInfoModal({ person, chat, onClose }) {
 
         <div className="space-y-4 p-6">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               About
             </p>
-            <p className="mt-1 text-sm text-neutral-800">{person.about || "—"}</p>
+            <p className="mt-1 text-sm text-neutral-800 dark:text-neutral-200">{person.about || "—"}</p>
           </div>
 
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Phone
             </p>
-            <p className="mt-1 text-sm text-neutral-800">{person.phone}</p>
+            <p className="mt-1 text-sm text-neutral-800 dark:text-neutral-200">{person.phone}</p>
           </div>
 
           {chat && <DisappearingSelect chat={chat} />}
 
           {blocked && (
-            <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700">
               You blocked this contact. Messages won't be delivered in either
               direction.
             </p>
@@ -108,8 +108,8 @@ export default function ContactInfoModal({ person, chat, onClose }) {
             disabled={busy}
             className={`w-full rounded border py-2.5 text-sm font-medium transition disabled:opacity-40 ${
               blocked
-                ? "border-neutral-300 text-neutral-700 hover:bg-neutral-50"
-                : "border-red-200 text-red-600 hover:bg-red-50"
+                ? "border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                : "border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
             }`}
           >
             {busy

@@ -60,20 +60,20 @@ export default function ForwardModal({ message, onClose }) {
       onClick={onClose}
     >
       <div
-        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white shadow-lg"
+        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white dark:bg-neutral-900 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-neutral-100 p-6 pb-4">
+        <div className="border-b border-neutral-100 dark:border-neutral-800 p-6 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-lg font-medium text-neutral-900">Forward to</h2>
-              <p className="mt-1 truncate text-sm text-neutral-500">
+              <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">Forward to</h2>
+              <p className="mt-1 truncate text-sm text-neutral-500 dark:text-neutral-400">
                 {message.content || message.fileName || "Attachment"}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+              className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
               aria-label="Close"
             >
               &times;
@@ -84,13 +84,13 @@ export default function ForwardModal({ message, onClose }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search chats"
-            className="mt-4 w-full rounded-lg bg-neutral-100 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
+            className="mt-4 w-full rounded-lg bg-neutral-100 dark:bg-neutral-800 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-3">
           {visible.length === 0 && (
-            <p className="py-6 text-center text-sm text-neutral-400">No chats found</p>
+            <p className="py-6 text-center text-sm text-neutral-400 dark:text-neutral-500">No chats found</p>
           )}
 
           {visible.map((chat) => {
@@ -101,16 +101,16 @@ export default function ForwardModal({ message, onClose }) {
                 key={chat._id}
                 onClick={() => toggle(chat._id)}
                 className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition ${
-                  picked ? "bg-emerald-50" : "hover:bg-neutral-50"
+                  picked ? "bg-emerald-50 dark:bg-emerald-900/30" : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 }`}
               >
                 <Avatar src={chatAvatar(chat, currentUserId)} name={name} size="sm" />
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-800">
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                   {name}
                 </span>
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                    picked ? "border-emerald-600 bg-emerald-600 text-white" : "border-neutral-300"
+                    picked ? "border-emerald-600 bg-emerald-600 text-white" : "border-neutral-300 dark:border-neutral-600"
                   }`}
                 >
                   {picked && (
@@ -126,7 +126,7 @@ export default function ForwardModal({ message, onClose }) {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="border-t border-neutral-100 p-6 pt-4">
+        <div className="border-t border-neutral-100 dark:border-neutral-800 p-6 pt-4">
           <button
             onClick={forward}
             disabled={selected.length === 0 || busy}

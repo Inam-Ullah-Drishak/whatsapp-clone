@@ -69,17 +69,17 @@ export default function StatusComposer({ onClose }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg"
+        className="w-full max-w-md rounded-lg bg-white dark:bg-neutral-900 p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-medium text-neutral-900">New status</h2>
-            <p className="mt-1 text-sm text-neutral-500">Disappears after 24 hours.</p>
+            <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">New status</h2>
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Disappears after 24 hours.</p>
           </div>
           <button
             onClick={onClose}
-            className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+            className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
             aria-label="Close"
           >
             &times;
@@ -111,7 +111,7 @@ export default function StatusComposer({ onClose }) {
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, 700))}
           placeholder={mode === "text" ? "What's on your mind?" : "Add a caption"}
-          className="mt-4 w-full resize-none rounded-lg bg-neutral-100 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
+          className="mt-4 w-full resize-none rounded-lg bg-neutral-100 dark:bg-neutral-800 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
         />
 
         {mode === "text" && (
@@ -134,7 +134,7 @@ export default function StatusComposer({ onClose }) {
           <button
             onClick={() => fileRef.current?.click()}
             disabled={busy}
-            className="text-sm font-medium text-emerald-700 hover:underline disabled:opacity-50"
+            className="text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline disabled:opacity-50"
           >
             {media ? "Change photo" : "Use a photo instead"}
           </button>
@@ -144,7 +144,7 @@ export default function StatusComposer({ onClose }) {
                 setMedia(null);
                 setMode("text");
               }}
-              className="text-sm text-neutral-500 hover:text-neutral-800"
+              className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100"
             >
               Remove
             </button>

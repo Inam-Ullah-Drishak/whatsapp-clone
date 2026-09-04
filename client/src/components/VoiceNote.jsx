@@ -10,10 +10,10 @@ const SPEEDS = [1, 1.5, 2];
 
 // WhatsApp's palette, sampled from the reference
 const C = {
-  icon: "#3b4a54",       // play triangle
-  meta: "#667781",       // duration and timestamp text
-  barPlayed: "#667781",
-  barIdle: "#9aa3a8",
+  icon: "var(--wa-icon)",       // play triangle
+  meta: "var(--wa-meta)",       // duration and timestamp text
+  barPlayed: "var(--wa-bar-played)",
+  barIdle: "var(--wa-bar-idle)",
   handle: "#53bdeb",     // blue scrubber
   micUnplayed: "#53bdeb",
   micPlayed: "#8696a0",

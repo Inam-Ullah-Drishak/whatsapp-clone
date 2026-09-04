@@ -93,20 +93,20 @@ export default function NewGroupModal({ onClose }) {
       onClick={onClose}
     >
       <div
-        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white shadow-lg"
+        className="flex max-h-[80vh] w-full max-w-md flex-col rounded-lg bg-white dark:bg-neutral-900 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-neutral-100 p-6 pb-4">
+        <div className="border-b border-neutral-100 dark:border-neutral-800 p-6 pb-4">
           <div className="flex items-start justify-between">
             <div>
-              <h2 className="text-lg font-medium text-neutral-900">New group</h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">New group</h2>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
                 Name it, then choose who to add.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+              className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
               aria-label="Close"
             >
               &times;
@@ -118,22 +118,22 @@ export default function NewGroupModal({ onClose }) {
             onChange={(e) => setName(e.target.value.slice(0, 100))}
             placeholder="Group name"
             autoFocus
-            className="mt-4 w-full border-b-2 border-neutral-200 pb-2 outline-none focus:border-emerald-600"
+            className="mt-4 w-full border-b-2 border-neutral-200 dark:border-neutral-700 pb-2 outline-none focus:border-emerald-600"
           />
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Your contacts
             </p>
-            <span className="text-xs text-neutral-400">
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">
               {members.length} selected
             </span>
           </div>
 
           {contacts.length === 0 && (
-            <p className="mt-3 text-sm text-neutral-400">
+            <p className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
               No contacts yet. Add someone by phone number below.
             </p>
           )}
@@ -144,7 +144,7 @@ export default function NewGroupModal({ onClose }) {
                 key={person._id}
                 onClick={() => toggle(person)}
                 className={`flex w-full items-center gap-3 rounded-lg p-2 text-left transition ${
-                  isSelected(person._id) ? "bg-emerald-50" : "hover:bg-neutral-50"
+                  isSelected(person._id) ? "bg-emerald-50 dark:bg-emerald-900/30" : "hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 }`}
               >
                 <Avatar
@@ -154,17 +154,17 @@ export default function NewGroupModal({ onClose }) {
                   online={person.isOnline}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-neutral-800">
+                  <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                     {person.name || person.phone}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">{person.phone}</p>
+                  <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{person.phone}</p>
                 </div>
 
                 <span
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
                     isSelected(person._id)
                       ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "border-neutral-300"
+                      : "border-neutral-300 dark:border-neutral-600"
                   }`}
                 >
                   {isSelected(person._id) && (
@@ -180,7 +180,7 @@ export default function NewGroupModal({ onClose }) {
               <button
                 key={person._id}
                 onClick={() => toggle(person)}
-                className="flex w-full items-center gap-3 rounded-lg bg-emerald-50 p-2 text-left"
+                className="flex w-full items-center gap-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 p-2 text-left"
               >
                 <Avatar
                   src={mediaUrl(person.avatar)}
@@ -188,12 +188,12 @@ export default function NewGroupModal({ onClose }) {
                   size="sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-neutral-800">
+                  <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                     {person.name || person.phone}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">{person.phone}</p>
+                  <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{person.phone}</p>
                 </div>
-                <span className="shrink-0 px-1 text-xl leading-none text-neutral-400 hover:text-red-600">
+                <span className="shrink-0 px-1 text-xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-red-600">
                   &times;
                 </span>
               </button>
@@ -207,12 +207,12 @@ export default function NewGroupModal({ onClose }) {
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+923001234567"
                 autoFocus
-                className="flex-1 rounded-lg bg-neutral-100 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
+                className="flex-1 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-4 py-2.5 text-sm outline-none placeholder:text-neutral-400"
               />
               <button
                 type="submit"
                 disabled={busy || phone.trim().length < 8}
-                className="rounded-lg bg-neutral-200 px-4 py-2.5 text-sm font-medium text-neutral-700 hover:bg-neutral-300 disabled:opacity-40"
+                className="rounded-lg bg-neutral-200 dark:bg-neutral-700 px-4 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 disabled:opacity-40"
               >
                 Add
               </button>
@@ -221,7 +221,7 @@ export default function NewGroupModal({ onClose }) {
             <button
               type="button"
               onClick={() => setShowPhoneInput(true)}
-              className="mt-4 text-sm font-medium text-emerald-700 hover:underline"
+              className="mt-4 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline"
             >
               + Add by phone number
             </button>
@@ -230,7 +230,7 @@ export default function NewGroupModal({ onClose }) {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
 
-        <div className="border-t border-neutral-100 p-6 pt-4">
+        <div className="border-t border-neutral-100 dark:border-neutral-800 p-6 pt-4">
           <button
             onClick={create}
             disabled={!canCreate}
@@ -238,7 +238,7 @@ export default function NewGroupModal({ onClose }) {
           >
             {busy ? "Creating..." : "Create group"}
           </button>
-          <p className="mt-3 text-center text-xs text-neutral-400">
+          <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
             You'll be added automatically as the group admin.
           </p>
         </div>

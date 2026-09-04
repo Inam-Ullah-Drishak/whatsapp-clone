@@ -65,15 +65,15 @@ export default function ProfileModal({ onClose, firstTime = false }) {
       onClick={firstTime ? undefined : onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg"
+        className="w-full max-w-md rounded-lg bg-white dark:bg-neutral-900 p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-lg font-medium text-neutral-900">
+            <h2 className="text-lg font-medium text-neutral-900 dark:text-neutral-100">
               {firstTime ? "Set up your profile" : "Profile"}
             </h2>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               {firstTime
                 ? "Add a name so people know who they're talking to."
                 : "This is how you appear to others."}
@@ -82,7 +82,7 @@ export default function ProfileModal({ onClose, firstTime = false }) {
           {!firstTime && (
             <button
               onClick={onClose}
-              className="text-2xl leading-none text-neutral-400 hover:text-neutral-700"
+              className="text-2xl leading-none text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-200"
               aria-label="Close"
             >
               &times;
@@ -96,7 +96,7 @@ export default function ProfileModal({ onClose, firstTime = false }) {
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="text-sm font-medium text-emerald-700 hover:underline disabled:opacity-50"
+            className="text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:underline disabled:opacity-50"
           >
             {uploading ? "Uploading..." : user?.avatar ? "Change photo" : "Add photo"}
           </button>
@@ -111,7 +111,7 @@ export default function ProfileModal({ onClose, firstTime = false }) {
 
         <form onSubmit={save} className="mt-6 space-y-4">
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Your name
             </label>
             <input
@@ -119,26 +119,26 @@ export default function ProfileModal({ onClose, firstTime = false }) {
               onChange={(e) => setName(e.target.value.slice(0, 50))}
               autoFocus
               placeholder="Enter your name"
-              className="mt-1 w-full border-b-2 border-neutral-200 pb-2 outline-none focus:border-emerald-600"
+              className="mt-1 w-full border-b-2 border-neutral-200 dark:border-neutral-700 pb-2 outline-none focus:border-emerald-600"
             />
-            <p className="mt-1 text-right text-xs text-neutral-400">
+            <p className="mt-1 text-right text-xs text-neutral-400 dark:text-neutral-500">
               {50 - name.length}
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <label className="block text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               About
             </label>
             <input
               value={about}
               onChange={(e) => setAbout(e.target.value.slice(0, 139))}
-              className="mt-1 w-full border-b-2 border-neutral-200 pb-2 outline-none focus:border-emerald-600"
+              className="mt-1 w-full border-b-2 border-neutral-200 dark:border-neutral-700 pb-2 outline-none focus:border-emerald-600"
             />
           </div>
 
-          <p className="text-sm text-neutral-500">
-            Phone <span className="text-neutral-800">{user?.phone}</span>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Phone <span className="text-neutral-800 dark:text-neutral-200">{user?.phone}</span>
           </p>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -155,7 +155,7 @@ export default function ProfileModal({ onClose, firstTime = false }) {
             <button
               type="button"
               onClick={logout}
-              className="w-full text-sm text-neutral-500 hover:text-neutral-800"
+              className="w-full text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-100"
             >
               Use a different number
             </button>

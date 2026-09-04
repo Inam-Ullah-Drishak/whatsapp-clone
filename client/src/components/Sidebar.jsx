@@ -47,8 +47,8 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
 
   return (
     <div
-      className={`group relative flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50 ${
-        active ? "bg-neutral-100" : ""
+      className={`group relative flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+        active ? "bg-neutral-100 dark:bg-neutral-800" : ""
       }`}
     >
       <button onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
@@ -58,12 +58,12 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
         online={other?.isOnline}
       />
 
-      <div className="min-w-0 flex-1 border-b border-neutral-100 pb-3">
+      <div className="min-w-0 flex-1 border-b border-neutral-100 dark:border-neutral-800 pb-3">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="truncate font-medium text-neutral-900">{name}</span>
+          <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">{name}</span>
           <span
             className={`shrink-0 text-xs ${
-              chat.unreadCount > 0 ? "text-emerald-600" : "text-neutral-400"
+              chat.unreadCount > 0 ? "text-emerald-600" : "text-neutral-400 dark:text-neutral-500"
             }`}
           >
             {formatChatTime(chat.lastMessage?.createdAt || chat.updatedAt)}
@@ -71,7 +71,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
         </div>
 
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-sm text-neutral-500">
+          <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">
             {messagePreview(chat.lastMessage, currentUserId) || "No messages yet"}
           </span>
           {chat.isFavourite && (
@@ -80,12 +80,12 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
             </svg>
           )}
           {chat.isMuted && (
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 3l18 18M18 8a6 6 0 0 0-9.3-5M6 9v3l-2 3h11M9 19a3 3 0 0 0 6 0" />
             </svg>
           )}
           {chat.isPinned && (
-            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400" fill="currentColor">
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" fill="currentColor">
               <path d="M16 3v2l-1 1v5l3 3v2h-5v6l-1 1-1-1v-6H6v-2l3-3V6L8 5V3z" />
             </svg>
           )}
@@ -103,7 +103,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
         <button
           ref={triggerRef}
           onClick={() => (menuOpen ? setMenuOpen(false) : openMenu())}
-          className={`rounded p-0.5 text-neutral-400 transition hover:text-neutral-700 ${
+          className={`rounded p-0.5 text-neutral-400 dark:text-neutral-500 transition hover:text-neutral-700 dark:hover:text-neutral-200 ${
             menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
           aria-label="Chat options"
@@ -127,14 +127,14 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
             <div
               style={{ position: "fixed", top: menuPos.top, left: menuPos.left, width: 208 }}
-              className="z-50 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-sm shadow-lg"
+              className="z-50 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 py-1 text-sm shadow-lg"
             >
               <button
                 onClick={() => {
                   onPin();
                   setMenuOpen(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 {chat.isPinned ? "Unpin" : "Pin"}
               </button>
@@ -143,7 +143,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
                   onFavourite();
                   setMenuOpen(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 {chat.isFavourite ? "Remove from favourites" : "Add to favourites"}
               </button>
@@ -152,7 +152,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
                   onArchive();
                   setMenuOpen(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 {chat.isArchived ? "Unarchive" : "Archive"}
               </button>
@@ -161,7 +161,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
                   onMute();
                   setMenuOpen(false);
                 }}
-                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               >
                 {chat.isMuted ? "Unmute" : "Mute"}
               </button>
@@ -170,7 +170,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
                   setMenuOpen(false);
                   onDelete();
                 }}
-                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50"
+                className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
               >
                 Delete chat
               </button>
@@ -309,9 +309,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-neutral-200 bg-white sm:w-96">
+    <aside className="flex h-full w-full flex-col border-r border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 sm:w-96">
       <header className="flex items-center justify-between px-5 pb-3 pt-5">
-        <h1 className="text-xl font-semibold text-neutral-900">Chats</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Chats</h1>
 
         <div className="flex items-center gap-1">
           <button
@@ -328,7 +328,7 @@ export default function Sidebar() {
           <div className="relative">
             <button
               onClick={() => setShowMenu((v) => !v)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-800 dark:hover:text-neutral-100"
               title="Menu"
               aria-label="Menu"
             >
@@ -342,13 +342,13 @@ export default function Sidebar() {
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-sm shadow-lg">
+                <div className="absolute right-0 top-10 z-20 w-48 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 py-1 text-sm shadow-lg">
                   <button
                     onClick={() => {
                       setShowMenu(false);
                       setShowNewGroup(true);
                     }}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     New group
                   </button>
@@ -357,7 +357,7 @@ export default function Sidebar() {
                       setShowMenu(false);
                       setShowStarred(true);
                     }}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     Starred messages
                   </button>
@@ -366,13 +366,13 @@ export default function Sidebar() {
                       setShowMenu(false);
                       setShowProfile(true);
                     }}
-                    className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+                    className="block w-full px-4 py-2 text-left text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   >
                     Profile
                   </button>
                   <button
                     onClick={logout}
-                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50"
+                    className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                   >
                     Log out
                   </button>
@@ -386,15 +386,15 @@ export default function Sidebar() {
       {notificationsSupported() && permission === "default" && (
         <button
           onClick={enableNotifications}
-          className="w-full bg-emerald-50 px-4 py-2 text-left text-sm text-emerald-800 transition hover:bg-emerald-100"
+          className="w-full bg-emerald-50 dark:bg-emerald-900/30 px-4 py-2 text-left text-sm text-emerald-800 dark:text-emerald-200 transition hover:bg-emerald-100"
         >
           Turn on desktop notifications
         </button>
       )}
 
       <div className="px-3 pb-1">
-        <div className="flex items-center gap-2 rounded-full bg-neutral-100 px-4 py-2">
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="flex items-center gap-2 rounded-full bg-neutral-100 dark:bg-neutral-800 px-4 py-2">
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
           </svg>
@@ -419,8 +419,8 @@ export default function Sidebar() {
             onClick={() => setFilter(f.id)}
             className={`rounded-full px-3 py-1 text-sm transition ${
               filter === f.id
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-200"
+                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700"
             }`}
           >
             {f.label}
@@ -430,13 +430,13 @@ export default function Sidebar() {
 
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <p className="px-4 py-6 text-center text-sm text-neutral-400">Loading chats...</p>
+          <p className="px-4 py-6 text-center text-sm text-neutral-400 dark:text-neutral-500">Loading chats...</p>
         )}
 
         {error && <p className="px-4 py-6 text-center text-sm text-red-600">{error}</p>}
 
         {!loading && !error && visible.length === 0 && (
-          <p className="px-4 py-10 text-center text-sm text-neutral-400">
+          <p className="px-4 py-10 text-center text-sm text-neutral-400 dark:text-neutral-500">
             {query
               ? "No chats match that name or number"
               : filter !== "all"
@@ -464,7 +464,7 @@ export default function Sidebar() {
           (c.participants || []).some((p) => p._id === contactResult._id)
         ) && (
           <>
-            <p className="px-4 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="px-4 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Not in your chats
             </p>
             <button
@@ -472,7 +472,7 @@ export default function Sidebar() {
                 await openChatWith(contactResult._id);
                 setQuery("");
               }}
-              className="flex w-full items-center gap-3 px-4 py-2 text-left transition hover:bg-neutral-50"
+              className="flex w-full items-center gap-3 px-4 py-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
             >
               <Avatar
                 src={mediaUrl(contactResult.avatar)}
@@ -480,11 +480,11 @@ export default function Sidebar() {
                 size="sm"
                 online={contactResult.isOnline}
               />
-              <div className="min-w-0 flex-1 border-b border-neutral-100 pb-2">
-                <p className="truncate text-sm font-medium text-neutral-800">
+              <div className="min-w-0 flex-1 border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                   {contactResult.name || contactResult.phone}
                 </p>
-                <p className="truncate text-xs text-neutral-500">
+                <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                   {contactResult.phone} · tap to start a chat
                 </p>
               </div>
@@ -494,12 +494,12 @@ export default function Sidebar() {
 
         {query.trim().length >= 2 && (
           <>
-            <p className="px-4 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500">
+            <p className="px-4 pb-1 pt-4 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               Messages {searching && "..."}
             </p>
 
             {!searching && msgResults.length === 0 && (
-              <p className="px-4 pb-2 text-sm text-neutral-400">No matching messages</p>
+              <p className="px-4 pb-2 text-sm text-neutral-400 dark:text-neutral-500">No matching messages</p>
             )}
 
             {msgResults.map((m) => (
@@ -510,17 +510,17 @@ export default function Sidebar() {
                   await selectChat(cid);
                   jumpToMessage(cid, m._id);
                 }}
-                className="flex w-full items-start gap-3 px-4 py-2 text-left transition hover:bg-neutral-50"
+                className="flex w-full items-start gap-3 px-4 py-2 text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
               >
                 <Avatar
                   src={mediaUrl(m.sender?.avatar)}
                   name={m.sender?.name}
                   size="sm"
                 />
-                <div className="min-w-0 flex-1 border-b border-neutral-100 pb-2">
-                  <p className="truncate text-sm font-medium text-neutral-800">
+                <div className="min-w-0 flex-1 border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                  <p className="truncate text-sm font-medium text-neutral-800 dark:text-neutral-200">
                     {m.sender?._id === currentUserId ? "You" : m.sender?.name}
-                    <span className="ml-1 font-normal text-neutral-400">
+                    <span className="ml-1 font-normal text-neutral-400 dark:text-neutral-500">
                       in{" "}
                       {m.chat?.isGroup
                         ? m.chat.groupName
@@ -529,8 +529,8 @@ export default function Sidebar() {
                         : m.sender?.name}
                     </span>
                   </p>
-                  <p className="truncate text-sm text-neutral-500">{m.content}</p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">{m.content}</p>
+                  <p className="text-xs text-neutral-400 dark:text-neutral-500">
                     {formatChatTime(m.createdAt)}
                   </p>
                 </div>
@@ -543,7 +543,7 @@ export default function Sidebar() {
           <>
             <button
               onClick={() => setShowArchived((v) => !v)}
-              className="flex w-full items-center justify-between px-4 py-3 text-sm text-neutral-500 transition hover:bg-neutral-50"
+              className="flex w-full items-center justify-between px-4 py-3 text-sm text-neutral-500 dark:text-neutral-400 transition hover:bg-neutral-50 dark:hover:bg-neutral-800"
             >
               <span>Archived ({archived.length})</span>
               <span className="text-xs">{showArchived ? "Hide" : "Show"}</span>

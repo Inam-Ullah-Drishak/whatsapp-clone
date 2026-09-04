@@ -73,17 +73,17 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50">
+    <div className="flex min-h-screen flex-col bg-neutral-50 dark:bg-neutral-900">
       <div className="h-28 bg-teal-800" />
 
       <div className="mx-auto -mt-16 w-full max-w-md px-5 pb-16">
-        <div className="rounded-lg bg-white p-8 shadow-sm">
+        <div className="rounded-lg bg-white dark:bg-neutral-900 p-8 shadow-sm">
           {step === "phone" ? (
             <>
-              <h1 className="text-xl font-medium text-teal-800">
+              <h1 className="text-xl font-medium text-teal-800 dark:text-teal-200">
                 Enter your phone number
               </h1>
-              <p className="mt-2 text-sm text-neutral-500">
+              <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                 We'll send you a code to verify this number. Include your country
                 code.
               </p>
@@ -111,10 +111,10 @@ export default function Login() {
             </>
           ) : (
             <>
-              <h1 className="text-xl font-medium text-teal-800">
+              <h1 className="text-xl font-medium text-teal-800 dark:text-teal-200">
                 Verify {phone}
               </h1>
-              <p className="mt-2 text-sm text-neutral-500">
+              <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                 Enter the 6-digit code we sent you.{" "}
                 <button
                   type="button"
@@ -123,14 +123,14 @@ export default function Login() {
                     setCode("");
                     setError("");
                   }}
-                  className="text-emerald-700 underline"
+                  className="text-emerald-700 dark:text-emerald-300 underline"
                 >
                   Wrong number?
                 </button>
               </p>
 
               {devCode && (
-                <p className="mt-4 rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <p className="mt-4 rounded bg-amber-50 dark:bg-amber-900/30 px-3 py-2 text-sm text-amber-800 dark:text-amber-200">
                   Dev mode code: <strong>{devCode}</strong>
                 </p>
               )}
@@ -162,7 +162,7 @@ export default function Login() {
                 type="button"
                 onClick={resend}
                 disabled={cooldown > 0}
-                className="mt-5 w-full text-sm text-neutral-500 disabled:text-neutral-400"
+                className="mt-5 w-full text-sm text-neutral-500 dark:text-neutral-400 disabled:text-neutral-400"
               >
                 {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
               </button>

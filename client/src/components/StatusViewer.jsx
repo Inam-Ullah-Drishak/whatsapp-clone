@@ -104,7 +104,7 @@ export default function StatusViewer({ group, startIndex = 0, onClose }) {
                 width:
                   i < index ? "100%" : i === index ? `${(elapsed / SLIDE_MS) * 100}%` : "0%",
               }}
-              className="h-full bg-white"
+              className="h-full bg-white dark:bg-neutral-900"
             />
           </div>
         ))}

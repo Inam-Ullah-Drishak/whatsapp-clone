@@ -15,7 +15,7 @@ export default function Home() {
   const [showStarred, setShowStarred] = useState(false);
 
   return (
-    <div className="flex h-screen bg-neutral-100">
+    <div className="flex h-screen bg-neutral-100 dark:bg-neutral-800">
       {/* The rail is desktop-only; on mobile the panel takes the full width */}
       <div className="hidden sm:flex">
         <NavRail
@@ -34,10 +34,10 @@ export default function Home() {
       {activeChat ? (
         <ChatWindow />
       ) : (
-        <main className="hidden flex-1 items-center justify-center border-l border-neutral-200 bg-neutral-50 sm:flex">
+        <main className="hidden flex-1 items-center justify-center border-l border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900 sm:flex">
           <div className="max-w-sm px-6 text-center">
-            <p className="text-xl font-light text-neutral-500">WhatsApp Clone</p>
-            <p className="mt-3 text-sm text-neutral-400">
+            <p className="text-xl font-light text-neutral-500 dark:text-neutral-400">WhatsApp Clone</p>
+            <p className="mt-3 text-sm text-neutral-400 dark:text-neutral-500">
               Select a chat from the list to start messaging.
             </p>
           </div>

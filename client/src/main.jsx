@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { SocketProvider } from "./context/SocketContext.jsx";
 import { ChatProvider } from "./context/ChatContext.jsx";
@@ -12,7 +13,8 @@ import "./index.css";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
         <SocketProvider>
           <ChatProvider>
             <MessageProvider>
@@ -22,7 +24,8 @@ createRoot(document.getElementById("root")).render(
             </MessageProvider>
           </ChatProvider>
         </SocketProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>
 );

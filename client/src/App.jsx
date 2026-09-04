@@ -5,8 +5,8 @@ import Home from "./pages/Home.jsx";
 
 /** Full-screen splash while the stored token is being checked. */
 const Splash = () => (
-  <div className="flex h-screen items-center justify-center bg-neutral-50">
-    <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-emerald-600" />
+  <div className="flex h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-900">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 dark:border-neutral-600 border-t-emerald-600" />
   </div>
 );
 
