@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useChats } from "../context/ChatContext.jsx";
 import { useMessages } from "../context/MessageContext.jsx";
+import { exportChat } from "../lib/exportChat.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import api, { mediaUrl } from "../lib/api.js";
@@ -21,7 +22,7 @@ import {
   otherParticipant,
 } from "../lib/chatUtils.js";
 
-function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onArchive, onMute, onDelete }) {
+function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onArchive, onMute, onClear, onExport, onDelete }) {
   const name = chatName(chat, currentUserId);
   const other = otherParticipant(chat, currentUserId);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,7 +34,7 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
   const openMenu = () => {
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const MENU_H = 210;
+      const MENU_H = 290;
       const MENU_W = 208;
       const below = window.innerHeight - rect.bottom > MENU_H;
 
@@ -168,6 +169,24 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onA
               <button
                 onClick={() => {
                   setMenuOpen(false);
+                  onExport();
+                }}
+                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              >
+                Export chat
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onClear();
+                }}
+                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              >
+                Clear messages
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
                   onDelete();
                 }}
                 className="block w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
@@ -194,6 +213,7 @@ export default function Sidebar() {
     toggleArchive,
     toggleMute,
     toggleFavourite,
+    clearChat,
     deleteChat,
     openChatWith,
   } = useChats();
@@ -252,6 +272,28 @@ export default function Sidebar() {
       setSearching(false);
     };
   }, [query]);
+
+  const confirmClear = (chat) => {
+    const label = chatName(chat, currentUserId);
+    if (
+      confirm(`Clear all messages in the chat with ${label}? Only your copy is removed.`)
+    ) {
+      clearChat(chat._id);
+    }
+  };
+
+  const runExport = async (chat) => {
+    try {
+      const count = await exportChat({
+        chatId: chat._id,
+        chatName: chatName(chat, currentUserId),
+        currentUserId,
+      });
+      if (count === 0) alert("Nothing to export — this chat has no messages.");
+    } catch {
+      alert("Could not export this chat.");
+    }
+  };
 
   const confirmDelete = (chat) => {
     const label = chatName(chat, currentUserId);
@@ -456,6 +498,8 @@ export default function Sidebar() {
             onArchive={() => toggleArchive(chat._id)}
             onMute={() => toggleMute(chat._id)}
             onFavourite={() => toggleFavourite(chat._id)}
+            onClear={() => confirmClear(chat)}
+            onExport={() => runExport(chat)}
             onDelete={() => confirmDelete(chat)}
           />
         ))}
@@ -561,6 +605,8 @@ export default function Sidebar() {
                   onArchive={() => toggleArchive(chat._id)}
                   onMute={() => toggleMute(chat._id)}
                   onFavourite={() => toggleFavourite(chat._id)}
+                  onClear={() => confirmClear(chat)}
+                  onExport={() => runExport(chat)}
                   onDelete={() => confirmDelete(chat)}
                 />
               ))}

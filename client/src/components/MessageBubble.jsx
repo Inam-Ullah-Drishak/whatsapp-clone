@@ -7,6 +7,27 @@ import VoiceNote from "./VoiceNote.jsx";
 import { EMOJI_GROUPS, QUICK_REACTIONS as REACTIONS } from "../lib/emoji.js";
 
 
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+
+/** Turn bare URLs in message text into links. */
+const linkify = (text) =>
+  text.split(URL_RE).map((part, i) =>
+    URL_RE.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="underline decoration-1 underline-offset-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+
 const time = (value) =>
   new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
@@ -456,9 +477,42 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
               </a>
             )}
 
+            {message.preview?.title && (
+              <a
+                href={message.preview.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mb-1 block overflow-hidden rounded-lg bg-black/5 dark:bg-white/10"
+              >
+                {message.preview.image && (
+                  <img
+                    src={message.preview.image}
+                    alt=""
+                    className="max-h-40 w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                )}
+                <div className="px-2.5 py-2">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {message.preview.siteName}
+                  </p>
+                  <p className="wa-bubble-text truncate text-sm font-medium text-neutral-800">
+                    {message.preview.title}
+                  </p>
+                  {message.preview.description && (
+                    <p className="line-clamp-2 text-xs text-neutral-500 dark:text-neutral-400">
+                      {message.preview.description}
+                    </p>
+                  )}
+                </div>
+              </a>
+            )}
+
             {message.content && (
               <p className="wa-bubble-text whitespace-pre-wrap break-words pr-6 text-sm text-neutral-800">
-                {message.content}
+                {linkify(message.content)}
               </p>
             )}
           </>

@@ -204,6 +204,32 @@ export const MessageProvider = ({ children }) => {
     []
   );
 
+  /**
+   * Disappearing messages vanish from the database on Mongo's schedule,
+   * but the open window would keep showing them until a reload. Schedule
+   * a client-side sweep at the next expiry instead.
+   */
+  useEffect(() => {
+    const expiring = messages
+      .filter((m) => m.expiresAt)
+      .map((m) => new Date(m.expiresAt).getTime());
+
+    if (expiring.length === 0) return;
+
+    const now = Date.now();
+    const soonest = Math.min(...expiring);
+    // Fire immediately if something is already past due
+    const delay = Math.max(0, soonest - now) + 500;
+
+    const timer = setTimeout(() => {
+      setMessages((prev) =>
+        prev.filter((m) => !m.expiresAt || new Date(m.expiresAt).getTime() > Date.now())
+      );
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [messages]);
+
   /* ---- Live updates ---- */
 
   useSocketEvent("message:new", ({ message }) => {
@@ -234,6 +260,13 @@ export const MessageProvider = ({ children }) => {
   useSocketEvent("message:status", ({ messageId, status }) => {
     setMessages((prev) =>
       prev.map((m) => (m._id === messageId ? { ...m, status } : m))
+    );
+  });
+
+  useSocketEvent("message:preview", ({ messageId, chatId, preview }) => {
+    if (chatId !== activeChatIdRef.current) return;
+    setMessages((prev) =>
+      prev.map((m) => (m._id === messageId ? { ...m, preview } : m))
     );
   });
 

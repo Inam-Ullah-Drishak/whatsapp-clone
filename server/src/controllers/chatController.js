@@ -641,3 +641,49 @@ export const setDisappearing = async (req, res) => {
     return res.status(500).json({ message: "Could not update setting" });
   }
 };
+
+
+/**
+ * DELETE /api/chats/:id/messages
+ *
+ * Empties the conversation for the caller but keeps the chat in their
+ * list. Unlike "delete chat", the thread stays; only its history goes.
+ * Everyone else keeps their copy.
+ */
+export const clearChat = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
+
+    const chat = await Chat.findById(id).select("participants");
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
+
+    const isMember = chat.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    const Message = (await import("../models/Message.js")).default;
+
+    await Message.updateMany(
+      { chat: id, deletedFor: { $ne: req.user._id } },
+      { $addToSet: { deletedFor: req.user._id } }
+    );
+
+    // The preview would otherwise still show a message they can't see
+    await Chat.updateOne(
+      { _id: id },
+      { $unset: { [`unreadCounts.${req.user._id}`]: "" } }
+    );
+
+    return res.status(200).json({ message: "Chat cleared" });
+  } catch (err) {
+    console.error("clearChat failed:", err.message);
+    return res.status(500).json({ message: "Could not clear chat" });
+  }
+};

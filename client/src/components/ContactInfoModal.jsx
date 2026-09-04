@@ -5,6 +5,7 @@ import Avatar from "./Avatar.jsx";
 import { formatChatTime } from "../lib/chatUtils.js";
 
 import DisappearingSelect from "./DisappearingSelect.jsx";
+import WallpaperPicker from "./WallpaperPicker.jsx";
 
 export default function ContactInfoModal({ person, chat, onClose }) {
   const { user, setUser } = useAuth();
@@ -93,6 +94,8 @@ export default function ContactInfoModal({ person, chat, onClose }) {
           </div>
 
           {chat && <DisappearingSelect chat={chat} />}
+
+          {chat && <WallpaperPicker chatId={chat._id} />}
 
           {blocked && (
             <p className="rounded bg-red-50 dark:bg-red-900/30 px-3 py-2 text-sm text-red-700">

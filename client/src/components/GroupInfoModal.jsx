@@ -4,6 +4,7 @@ import { useChats } from "../context/ChatContext.jsx";
 import { otherParticipant } from "../lib/chatUtils.js";
 import Avatar from "./Avatar.jsx";
 import DisappearingSelect from "./DisappearingSelect.jsx";
+import WallpaperPicker from "./WallpaperPicker.jsx";
 
 export default function GroupInfoModal({ chat, onClose }) {
   const { chats, currentUserId, loadChats, setActiveChatId } = useChats();
@@ -223,8 +224,9 @@ export default function GroupInfoModal({ chat, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="mb-4">
+          <div className="mb-4 space-y-4">
             <DisappearingSelect chat={chat} disabled={!iAmAdmin} />
+            <WallpaperPicker chatId={chat._id} />
           </div>
 
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">

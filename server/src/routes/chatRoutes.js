@@ -15,6 +15,7 @@ import {
   toggleFavourite,
   setDisappearing,
   deleteChat,
+  clearChat,
   deleteGroup,
 } from "../controllers/chatController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -37,6 +38,7 @@ router.patch("/:id/mute", toggleMute);
 router.patch("/:id/favourite", toggleFavourite);
 router.patch("/:id/disappearing", setDisappearing);
 router.delete("/:id", deleteChat);
+router.delete("/:id/messages", clearChat);
 
 // Group management
 router.patch("/:id/group", updateGroup);

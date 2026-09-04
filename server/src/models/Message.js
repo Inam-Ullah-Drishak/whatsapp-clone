@@ -88,6 +88,16 @@ const messageSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Open Graph data for the first link in the message, filled in
+    // after the message is created so sending is never delayed
+    preview: {
+      url: String,
+      title: String,
+      description: String,
+      image: String,
+      siteName: String,
+    },
+
     // Set only in chats with disappearing messages switched on
     expiresAt: {
       type: Date,

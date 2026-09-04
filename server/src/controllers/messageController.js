@@ -3,6 +3,7 @@ import Message from "../models/Message.js";
 import Chat from "../models/Chat.js";
 import User from "../models/User.js";
 import { getIO, chatRoom, userRoom } from "../socket/io.js";
+import { firstUrl, fetchLinkPreview } from "../utils/linkPreview.js";
 
 const SENDER_FIELDS = "_id name avatar";
 // WhatsApp allows edits for 15 minutes; the same window keeps history honest
@@ -134,6 +135,23 @@ export const sendMessage = async (req, res) => {
     getIO().to(chatRoom(chatId)).emit("message:new", { message });
     emitChatUpdate(chat, message);
 
+    // Link preview runs after the response so a slow site never delays
+    // the send. It arrives separately over the socket.
+    const link = message.type === "text" ? firstUrl(message.content) : null;
+    if (link) {
+      fetchLinkPreview(link)
+        .then(async (preview) => {
+          if (!preview) return;
+          await Message.updateOne({ _id: message._id }, { $set: { preview } });
+          getIO().to(chatRoom(chatId)).emit("message:preview", {
+            messageId: message._id.toString(),
+            chatId,
+            preview,
+          });
+        })
+        .catch(() => {});
+    }
+
     return res.status(201).json({ message });
   } catch (err) {
     console.error("sendMessage failed:", err.message);
@@ -172,6 +190,9 @@ export const getMessages = async (req, res) => {
     const query = {
       chat: chatId,
       deletedFor: { $ne: req.user._id },
+      // Mongo's TTL monitor only sweeps once a minute, so filter expired
+      // messages out rather than briefly showing them again
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
     };
 
     if (before) {
@@ -668,6 +689,7 @@ export const getMessagesAround = async (req, res) => {
     const base = {
       chat: chatId,
       deletedFor: { $ne: req.user._id },
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
     };
 
     const populate = (q) =>

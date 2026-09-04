@@ -3,6 +3,8 @@ import { useChats } from "../context/ChatContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useMessages } from "../context/MessageContext.jsx";
 import { useSocketEvent } from "../context/SocketContext.jsx";
+import { useTheme } from "../context/ThemeContext.jsx";
+import { getWallpaper, wallpaperColour, onWallpaperChange } from "../lib/wallpaper.js";
 import Avatar from "./Avatar.jsx";
 import MessageBubble from "./MessageBubble.jsx";
 import Composer from "./Composer.jsx";
@@ -35,6 +37,18 @@ export default function ChatWindow() {
 
   const [typingUsers, setTypingUsers] = useState([]);
   const [showInfo, setShowInfo] = useState(false);
+  const { theme } = useTheme();
+  const [wallpaper, setWallpaperId] = useState(() => getWallpaper(activeChatId));
+
+  // Re-read when the chat changes or the picker fires its event
+  useEffect(() => setWallpaperId(getWallpaper(activeChatId)), [activeChatId]);
+  useEffect(
+    () =>
+      onWallpaperChange((e) => {
+        if (e.detail?.chatId === activeChatId) setWallpaperId(e.detail.id);
+      }),
+    [activeChatId]
+  );
   const bottomRef = useRef(null);
   const scrollRef = useRef(null);
 
@@ -107,7 +121,7 @@ export default function ChatWindow() {
   return (
     <section
       className="flex h-full flex-1 flex-col"
-      style={{ background: "var(--wa-chat-bg)" }}
+      style={{ background: wallpaperColour(wallpaper, theme) }}
     >
       <header className="flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-3 py-2.5">
         {/* Mobile only: the sidebar is hidden once a chat is open */}

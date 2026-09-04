@@ -101,6 +101,15 @@ export const ChatProvider = ({ children }) => {
     );
   }, []);
 
+  const clearChat = useCallback(async (chatId) => {
+    await api.delete(`/chats/${chatId}/messages`);
+    setChats((prev) =>
+      prev.map((c) =>
+        c._id === chatId ? { ...c, lastMessage: null, unreadCount: 0 } : c
+      )
+    );
+  }, []);
+
   const deleteChat = useCallback(async (chatId) => {
     await api.delete(`/chats/${chatId}`);
     setChats((prev) => prev.filter((c) => c._id !== chatId));
@@ -221,6 +230,7 @@ export const ChatProvider = ({ children }) => {
     toggleArchive,
     toggleMute,
     toggleFavourite,
+    clearChat,
     deleteChat,
     loadChats,
     loading,
