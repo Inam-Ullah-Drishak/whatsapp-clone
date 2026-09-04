@@ -30,7 +30,8 @@ const dayLabel = (value) => {
 export default function ChatWindow() {
   const { activeChat, activeChatId, currentUserId, setActiveChatId } = useChats();
   const { user } = useAuth();
-  const { messages, loading, hasMore, loadOlder, loadingOlder } = useMessages();
+  const { messages, loading, hasMore, loadOlder, loadingOlder, highlightId, setHighlightId } =
+    useMessages();
 
   const [typingUsers, setTypingUsers] = useState([]);
   const [showInfo, setShowInfo] = useState(false);
@@ -48,10 +49,24 @@ export default function ChatWindow() {
       (id) => (id._id ? id._id : id).toString() === other._id
     );
 
-  // Jump to the newest message on load and whenever one arrives
+  // Jump to the newest message on load and whenever one arrives, unless
+  // we've deliberately opened at an older message
   useEffect(() => {
+    if (highlightId) return;
     bottomRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [messages.length, activeChatId]);
+  }, [messages.length, activeChatId, highlightId]);
+
+  // Scroll the jumped-to message into view, then clear the highlight
+  useEffect(() => {
+    if (!highlightId || loading) return;
+
+    const el = document.getElementById(`msg-${highlightId}`);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "auto", block: "center" });
+    const timer = setTimeout(() => setHighlightId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [highlightId, loading, messages, setHighlightId]);
 
   useEffect(() => {
     setTypingUsers([]);
@@ -115,7 +130,15 @@ export default function ChatWindow() {
             online={other?.isOnline}
           />
           <div className="min-w-0">
-            <p className="truncate font-medium text-neutral-900">{name}</p>
+            <p className="flex items-center gap-1.5 truncate font-medium text-neutral-900">
+              {name}
+              {activeChat?.disappearingAfter > 0 && (
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" strokeLinecap="round" />
+                </svg>
+              )}
+            </p>
             <p className="truncate text-xs text-neutral-500">{subtitle()}</p>
           </div>
         </button>
@@ -140,7 +163,11 @@ export default function ChatWindow() {
           <GroupInfoModal chat={activeChat} onClose={() => setShowInfo(false)} />
         ) : (
           other && (
-            <ContactInfoModal person={other} onClose={() => setShowInfo(false)} />
+            <ContactInfoModal
+              person={other}
+              chat={activeChat}
+              onClose={() => setShowInfo(false)}
+            />
           )
         ))}
 
@@ -177,6 +204,7 @@ export default function ChatWindow() {
                 message={m}
                 mine={m.sender?._id === currentUserId}
                 showSender={activeChat?.isGroup}
+                highlighted={m._id === highlightId}
               />
             </div>
           );

@@ -16,6 +16,9 @@ export const MessageProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
+  // Set when we've jumped to a specific message so the view can scroll
+  // to it and flash a highlight
+  const [highlightId, setHighlightId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -58,6 +61,28 @@ export const MessageProvider = ({ children }) => {
       cancelled = true;
     };
   }, [activeChatId]);
+
+  /**
+   * Load a window of history centred on one message rather than the
+   * newest page. Used by search results and reply quotes.
+   */
+  const jumpToMessage = useCallback(async (chatId, messageId) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data } = await api.get(`/messages/${chatId}/around/${messageId}`, {
+        params: { limit: 30 },
+      });
+      setMessages(data.messages);
+      setHasMore(data.hasMore);
+      cursorRef.current = data.nextCursor;
+      setHighlightId(messageId);
+    } catch {
+      setError("Could not open that message");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const loadOlder = useCallback(async () => {
     if (!activeChatId || !hasMore || loadingOlder || !cursorRef.current) return;
@@ -253,6 +278,9 @@ export const MessageProvider = ({ children }) => {
     toggleStar,
     reactToMessage,
     loadOlder,
+    jumpToMessage,
+    highlightId,
+    setHighlightId,
     currentUserId: user?._id,
   };
 

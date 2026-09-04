@@ -3,6 +3,7 @@ import api, { errorMessage, mediaUrl } from "../lib/api.js";
 import { useChats } from "../context/ChatContext.jsx";
 import { otherParticipant } from "../lib/chatUtils.js";
 import Avatar from "./Avatar.jsx";
+import DisappearingSelect from "./DisappearingSelect.jsx";
 
 export default function GroupInfoModal({ chat, onClose }) {
   const { chats, currentUserId, loadChats, setActiveChatId } = useChats();
@@ -222,6 +223,10 @@ export default function GroupInfoModal({ chat, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="mb-4">
+            <DisappearingSelect chat={chat} disabled={!iAmAdmin} />
+          </div>
+
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
             {chat.participants?.length || 0} members
           </p>

@@ -35,7 +35,7 @@ function Ticks({ status }) {
   );
 }
 
-export default function MessageBubble({ message, mine, showSender }) {
+export default function MessageBubble({ message, mine, showSender, highlighted }) {
   const {
     deleteMessage,
     setReplyingTo,
@@ -143,12 +143,15 @@ export default function MessageBubble({ message, mine, showSender }) {
 
   return (
     <div
+      id={`msg-${message._id}`}
       className={`group flex ${mine ? "justify-end" : "justify-start"} px-4 ${
         Object.keys(reactionGroups).length > 0 && !deleted ? "mb-4" : ""
       }`}
     >
       <div
-        className="relative max-w-[75%] rounded-lg px-3 py-2 shadow-sm sm:max-w-[65%]"
+        className={`relative max-w-[75%] rounded-lg px-3 py-2 shadow-sm transition sm:max-w-[65%] ${
+          highlighted ? "ring-2 ring-amber-400" : ""
+        }`}
         style={{ background: mine ? "#d9fdd3" : "#ffffff" }}
       >
         {!deleted && (
@@ -256,15 +259,31 @@ export default function MessageBubble({ message, mine, showSender }) {
                 }
                 setMenuOpen((v) => !v);
               }}
-              className={`flex h-6 w-6 items-center justify-center rounded-full border border-black/5 bg-white/85 text-neutral-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-neutral-900 ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full text-neutral-500 transition hover:text-neutral-800 ${
                 menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              } ${hasMedia ? "sm:opacity-0" : ""}`}
+              }`}
+              style={
+                // Media has no predictable backdrop, so keep a subtle
+                // scrim behind the icon only in that case
+                hasMedia
+                  ? {
+                      background: "rgba(255,255,255,0.75)",
+                      color: "#3b4a54",
+                    }
+                  : undefined
+              }
               aria-label="Message options"
             >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
-                <circle cx="12" cy="5" r="1.8" />
-                <circle cx="12" cy="12" r="1.8" />
-                <circle cx="12" cy="19" r="1.8" />
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
 

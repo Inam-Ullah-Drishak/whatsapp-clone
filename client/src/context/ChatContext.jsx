@@ -159,6 +159,12 @@ export const ChatProvider = ({ children }) => {
   });
 
   // A group was renamed, or members changed
+  useSocketEvent("chat:disappearing", ({ chatId, hours }) => {
+    setChats((prev) =>
+      prev.map((c) => (c._id === chatId ? { ...c, disappearingAfter: hours } : c))
+    );
+  });
+
   useSocketEvent("group:updated", ({ chat }) => {
     setChats((prev) =>
       prev.map((c) =>

@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useChats } from "../context/ChatContext.jsx";
+import { useMessages } from "../context/MessageContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import api, { mediaUrl } from "../lib/api.js";
@@ -20,10 +21,29 @@ import {
   otherParticipant,
 } from "../lib/chatUtils.js";
 
-function ChatRow({ chat, active, currentUserId, onClick, onPin, onArchive, onMute, onDelete }) {
+function ChatRow({ chat, active, currentUserId, onClick, onPin, onFavourite, onArchive, onMute, onDelete }) {
   const name = chatName(chat, currentUserId);
   const other = otherParticipant(chat, currentUserId);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The chat list scrolls, and an absolutely positioned menu gets clipped
+  // by its overflow. Fixed coordinates escape the container entirely.
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef(null);
+
+  const openMenu = () => {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const MENU_H = 210;
+      const MENU_W = 208;
+      const below = window.innerHeight - rect.bottom > MENU_H;
+
+      setMenuPos({
+        top: below ? rect.bottom + 4 : rect.top - MENU_H - 4,
+        left: Math.min(rect.right - MENU_W, window.innerWidth - MENU_W - 8),
+      });
+    }
+    setMenuOpen(true);
+  };
 
   return (
     <div
@@ -54,6 +74,11 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onArchive, onMut
           <span className="truncate text-sm text-neutral-500">
             {messagePreview(chat.lastMessage, currentUserId) || "No messages yet"}
           </span>
+          {chat.isFavourite && (
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-rose-500" fill="currentColor">
+              <path d="M12 21s-7-4.6-9.3-8.3A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6.7C19 16.4 12 21 12 21z" />
+            </svg>
+          )}
           {chat.isMuted && (
             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-neutral-400" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M3 3l18 18M18 8a6 6 0 0 0-9.3-5M6 9v3l-2 3h11M9 19a3 3 0 0 0 6 0" />
@@ -73,26 +98,37 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onArchive, onMut
       </div>
       </button>
 
-      <div className="absolute right-2 top-3">
+      {/* Chevron on hover, matching WhatsApp Web's row control */}
+      <div className="absolute bottom-4 right-3">
         <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className={`rounded p-1 text-neutral-400 transition hover:bg-neutral-200 hover:text-neutral-700 ${
+          ref={triggerRef}
+          onClick={() => (menuOpen ? setMenuOpen(false) : openMenu())}
+          className={`rounded p-0.5 text-neutral-400 transition hover:text-neutral-700 ${
             menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
           }`}
           aria-label="Chat options"
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-            <circle cx="12" cy="5" r="1.8" />
-            <circle cx="12" cy="12" r="1.8" />
-            <circle cx="12" cy="19" r="1.8" />
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
 
         {menuOpen && (
           <>
             {/* Invisible backdrop so the next click closes the menu */}
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-7 z-20 w-40 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-sm shadow-lg">
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div
+              style={{ position: "fixed", top: menuPos.top, left: menuPos.left, width: 208 }}
+              className="z-50 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 text-sm shadow-lg"
+            >
               <button
                 onClick={() => {
                   onPin();
@@ -101,6 +137,15 @@ function ChatRow({ chat, active, currentUserId, onClick, onPin, onArchive, onMut
                 className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
               >
                 {chat.isPinned ? "Unpin" : "Pin"}
+              </button>
+              <button
+                onClick={() => {
+                  onFavourite();
+                  setMenuOpen(false);
+                }}
+                className="block w-full px-4 py-2 text-left text-neutral-700 hover:bg-neutral-100"
+              >
+                {chat.isFavourite ? "Remove from favourites" : "Add to favourites"}
               </button>
               <button
                 onClick={() => {
@@ -148,10 +193,12 @@ export default function Sidebar() {
     togglePin,
     toggleArchive,
     toggleMute,
+    toggleFavourite,
     deleteChat,
     openChatWith,
   } = useChats();
   const { user, logout } = useAuth();
+  const { jumpToMessage } = useMessages();
   const [query, setQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -244,10 +291,10 @@ export default function Sidebar() {
     ? chats.filter((c) => chatMatches(c, query.trim()))
     : chats;
 
-  // Chips narrow the list further; "Favourites" maps to pinned chats
+  // Chips narrow the list further
   const filtered = matches.filter((c) => {
     if (filter === "unread") return (c.unreadCount || 0) > 0;
-    if (filter === "favourites") return c.isPinned;
+    if (filter === "favourites") return c.isFavourite;
     if (filter === "groups") return c.isGroup;
     return true;
   });
@@ -408,6 +455,7 @@ export default function Sidebar() {
             onPin={() => togglePin(chat._id)}
             onArchive={() => toggleArchive(chat._id)}
             onMute={() => toggleMute(chat._id)}
+            onFavourite={() => toggleFavourite(chat._id)}
             onDelete={() => confirmDelete(chat)}
           />
         ))}
@@ -457,7 +505,11 @@ export default function Sidebar() {
             {msgResults.map((m) => (
               <button
                 key={m._id}
-                onClick={() => selectChat(m.chat?._id || m.chat)}
+                onClick={async () => {
+                  const cid = m.chat?._id || m.chat;
+                  await selectChat(cid);
+                  jumpToMessage(cid, m._id);
+                }}
                 className="flex w-full items-start gap-3 px-4 py-2 text-left transition hover:bg-neutral-50"
               >
                 <Avatar
@@ -508,6 +560,7 @@ export default function Sidebar() {
                   onPin={() => togglePin(chat._id)}
                   onArchive={() => toggleArchive(chat._id)}
                   onMute={() => toggleMute(chat._id)}
+                  onFavourite={() => toggleFavourite(chat._id)}
                   onDelete={() => confirmDelete(chat)}
                 />
               ))}

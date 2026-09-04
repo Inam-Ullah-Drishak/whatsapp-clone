@@ -13,6 +13,7 @@ import {
   toggleArchive,
   toggleMute,
   toggleFavourite,
+  setDisappearing,
   deleteChat,
   deleteGroup,
 } from "../controllers/chatController.js";
@@ -34,6 +35,7 @@ router.patch("/:id/pin", togglePin);
 router.patch("/:id/archive", toggleArchive);
 router.patch("/:id/mute", toggleMute);
 router.patch("/:id/favourite", toggleFavourite);
+router.patch("/:id/disappearing", setDisappearing);
 router.delete("/:id", deleteChat);
 
 // Group management

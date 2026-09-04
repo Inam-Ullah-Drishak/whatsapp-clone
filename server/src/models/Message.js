@@ -88,6 +88,12 @@ const messageSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Set only in chats with disappearing messages switched on
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
+
     // Shows the "Forwarded" label, same as WhatsApp
     isForwarded: {
       type: Boolean,
@@ -116,6 +122,18 @@ const messageSchema = new mongoose.Schema(
 
 // Loading a chat's history, newest first, with pagination
 messageSchema.index({ chat: 1, createdAt: -1 });
+
+/**
+ * Mongo removes each message at its own expiresAt. The partial filter
+ * keeps the index small, since most messages never expire.
+ */
+messageSchema.index(
+  { expiresAt: 1 },
+  {
+    expireAfterSeconds: 0,
+    partialFilterExpression: { expiresAt: { $type: "date" } },
+  }
+);
 
 /**
  * A text message needs words; a media message needs a file.

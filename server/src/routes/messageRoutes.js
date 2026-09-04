@@ -10,6 +10,7 @@ import {
   searchMessages,
   reactToMessage,
   getMessageInfo,
+  getMessagesAround,
 } from "../controllers/messageController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -28,6 +29,8 @@ router.get("/:id/info", getMessageInfo);
 router.delete("/:id", deleteMessage);
 router.patch("/:id", editMessage);
 
+// More specific path first, or "around" is read as part of :chatId
+router.get("/:chatId/around/:messageId", getMessagesAround);
 router.get("/:chatId", getMessages);
 router.patch("/:chatId/read", markMessagesRead);
 

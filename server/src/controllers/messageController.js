@@ -95,8 +95,15 @@ export const sendMessage = async (req, res) => {
       }
     }
 
+    // Disappearing messages: stamp a lifetime so Mongo's TTL index
+    // removes it later. Null means it never expires.
+    const expiresAt = chat.disappearingAfter
+      ? new Date(Date.now() + chat.disappearingAfter * 60 * 60 * 1000)
+      : null;
+
     const message = await Message.create({
       chat: chatId,
+      expiresAt,
       sender: req.user._id,
       type,
       content: content || "",
@@ -626,5 +633,81 @@ export const getMessageInfo = async (req, res) => {
   } catch (err) {
     console.error("getMessageInfo failed:", err.message);
     return res.status(500).json({ message: "Could not load message info" });
+  }
+};
+
+
+/**
+ * GET /api/messages/:chatId/around/:messageId?limit=20
+ *
+ * A window of history centred on one message, so search results and reply
+ * quotes can jump straight to it instead of loading from the newest end.
+ */
+export const getMessagesAround = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const limit = Math.min(Number(req.query.limit) || 20, 50);
+
+    if (!mongoose.isValidObjectId(chatId) || !mongoose.isValidObjectId(messageId)) {
+      return res.status(400).json({ message: "Invalid id" });
+    }
+
+    const chat = await Chat.findById(chatId).select("participants");
+    const isMember = chat?.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    const target = await Message.findById(messageId).select("chat createdAt");
+    if (!target || target.chat.toString() !== chatId) {
+      return res.status(404).json({ message: "Message not found in this chat" });
+    }
+
+    const base = {
+      chat: chatId,
+      deletedFor: { $ne: req.user._id },
+    };
+
+    const populate = (q) =>
+      q
+        .populate("sender", SENDER_FIELDS)
+        .populate({ path: "replyTo", populate: { path: "sender", select: SENDER_FIELDS } });
+
+    // Half a page each side of the target
+    const [older, newer] = await Promise.all([
+      populate(
+        Message.find({ ...base, createdAt: { $lt: target.createdAt } })
+          .sort({ createdAt: -1 })
+          .limit(Math.floor(limit / 2))
+      ),
+      populate(
+        Message.find({ ...base, createdAt: { $gte: target.createdAt } })
+          .sort({ createdAt: 1 })
+          .limit(Math.ceil(limit / 2))
+      ),
+    ]);
+
+    const messages = [...older.reverse(), ...newer];
+
+    // Is there more history above this window?
+    const hasMore = messages.length
+      ? (await Message.countDocuments({
+          ...base,
+          createdAt: { $lt: messages[0].createdAt },
+        })) > 0
+      : false;
+
+    return res.status(200).json({
+      messages,
+      hasMore,
+      nextCursor: messages.length ? messages[0].createdAt : null,
+      // The client may be showing a window rather than the live tail
+      atBottom: newer.length < Math.ceil(limit / 2),
+    });
+  } catch (err) {
+    console.error("getMessagesAround failed:", err.message);
+    return res.status(500).json({ message: "Could not load messages" });
   }
 };

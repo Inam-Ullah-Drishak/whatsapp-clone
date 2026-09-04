@@ -36,6 +36,14 @@ const chatSchema = new mongoose.Schema(
       ref: "User",
     },
 
+    // 0 means off. Any other value is a lifetime in hours applied to new
+    // messages in this chat.
+    disappearingAfter: {
+      type: Number,
+      default: 0,
+      enum: [0, 24, 168, 2160], // off, 24 hours, 7 days, 90 days
+    },
+
     // Denormalized pointer so the chat list can render without loading
     // messages. Sorting by updatedAt gives you the sidebar order for free.
     lastMessage: {

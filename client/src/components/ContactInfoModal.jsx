@@ -4,7 +4,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
 import { formatChatTime } from "../lib/chatUtils.js";
 
-export default function ContactInfoModal({ person, onClose }) {
+import DisappearingSelect from "./DisappearingSelect.jsx";
+
+export default function ContactInfoModal({ person, chat, onClose }) {
   const { user, setUser } = useAuth();
 
   const [error, setError] = useState("");
@@ -89,6 +91,8 @@ export default function ContactInfoModal({ person, onClose }) {
             </p>
             <p className="mt-1 text-sm text-neutral-800">{person.phone}</p>
           </div>
+
+          {chat && <DisappearingSelect chat={chat} />}
 
           {blocked && (
             <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">

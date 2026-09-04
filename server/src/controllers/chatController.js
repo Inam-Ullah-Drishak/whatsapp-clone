@@ -25,6 +25,7 @@ const withUnreadCount = (chat, userId) => {
   obj.isArchived = has(chat.archivedBy);
   obj.isMuted = has(chat.mutedBy);
   obj.isFavourite = has(chat.favouritedBy);
+  obj.disappearingAfter = chat.disappearingAfter || 0;
 
   delete obj.unreadCounts;
   delete obj.pinnedBy;
@@ -578,5 +579,65 @@ export const toggleFavourite = async (req, res) => {
   } catch (err) {
     console.error("toggleFavourite failed:", err.message);
     return res.status(500).json({ message: "Could not update favourites" });
+  }
+};
+
+
+const DISAPPEARING_OPTIONS = [0, 24, 168, 2160];
+
+/**
+ * PATCH /api/chats/:id/disappearing
+ * Body: { hours }
+ *
+ * Applies to new messages only — existing ones keep whatever lifetime
+ * they were created with, as changing history retroactively would be
+ * surprising.
+ */
+export const setDisappearing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const hours = Number(req.body.hours);
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
+
+    if (!DISAPPEARING_OPTIONS.includes(hours)) {
+      return res.status(400).json({ message: "Unsupported duration" });
+    }
+
+    const chat = await Chat.findById(id);
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
+
+    const isMember = chat.participants.some(
+      (p) => p.toString() === req.user._id.toString()
+    );
+    if (!isMember) {
+      return res.status(403).json({ message: "You are not part of this chat" });
+    }
+
+    // In groups this is an admin setting, as it affects everyone
+    if (chat.isGroup) {
+      const isAdmin = chat.groupAdmins.some(
+        (a) => a.toString() === req.user._id.toString()
+      );
+      if (!isAdmin) {
+        return res.status(403).json({ message: "Only group admins can change this" });
+      }
+    }
+
+    chat.disappearingAfter = hours;
+    await chat.save();
+
+    getIO().to(chatRoom(chat._id.toString())).emit("chat:disappearing", {
+      chatId: chat._id.toString(),
+      hours,
+      changedBy: req.user.name || req.user.phone,
+    });
+
+    return res.status(200).json({ disappearingAfter: hours });
+  } catch (err) {
+    console.error("setDisappearing failed:", err.message);
+    return res.status(500).json({ message: "Could not update setting" });
   }
 };
