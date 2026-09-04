@@ -94,7 +94,7 @@ export default function StatusViewer({ group, startIndex = 0, onClose }) {
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-neutral-900">
+    <div className="fixed inset-0 z-60 flex flex-col bg-neutral-900">
       {/* Segment progress bars */}
       <div className="flex gap-1 px-3 pt-3">
         {group.items.map((it, i) => (

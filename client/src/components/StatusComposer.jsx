@@ -65,7 +65,7 @@ export default function StatusComposer({ onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 p-4 pt-16"
+      className="fixed inset-0 z-60 flex items-start justify-center bg-black/50 p-4 pt-16"
       onClick={onClose}
     >
       <div

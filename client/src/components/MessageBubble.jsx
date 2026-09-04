@@ -511,7 +511,7 @@ export default function MessageBubble({ message, mine, showSender, highlighted }
             )}
 
             {message.content && (
-              <p className="wa-bubble-text whitespace-pre-wrap break-words pr-6 text-sm text-neutral-800">
+              <p className="wa-bubble-text whitespace-pre-wrap wrap-break-word pr-6 text-sm text-neutral-800">
                 {linkify(message.content)}
               </p>
             )}
