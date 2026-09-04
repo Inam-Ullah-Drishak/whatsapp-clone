@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useChats } from "../context/ChatContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Avatar from "./Avatar.jsx";
+import { mediaUrl } from "../lib/api.js";
+import NewChatModal from "./NewChatModal.jsx";
+import ProfileModal from "./ProfileModal.jsx";
 import {
   chatName,
   chatAvatar,
@@ -58,6 +61,11 @@ export default function Sidebar() {
   const { chats, activeChatId, selectChat, loading, error, currentUserId } = useChats();
   const { user, logout } = useAuth();
   const [query, setQuery] = useState("");
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // A user with no name has never completed setup — open it for them once
+  const needsSetup = Boolean(user) && !user.name;
 
   const visible = query.trim()
     ? chats.filter((c) =>
@@ -68,18 +76,34 @@ export default function Sidebar() {
   return (
     <aside className="flex h-full w-full flex-col border-r border-neutral-200 bg-white sm:w-96">
       <header className="flex items-center justify-between bg-neutral-100 px-4 py-2.5">
-        <div className="flex items-center gap-3">
-          <Avatar src={user?.avatar} name={user?.name || user?.phone} size="sm" />
+        <button
+          onClick={() => setShowProfile(true)}
+          className="flex items-center gap-3 rounded px-1 py-0.5 transition hover:bg-neutral-200"
+          title="Edit profile"
+        >
+          <Avatar src={mediaUrl(user?.avatar)} name={user?.name || user?.phone} size="sm" />
           <span className="text-sm font-medium text-neutral-700">
             {user?.name || user?.phone}
           </span>
-        </div>
-        <button
-          onClick={logout}
-          className="text-sm text-neutral-500 hover:text-neutral-800"
-        >
-          Log out
         </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowNewChat(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 transition hover:bg-neutral-200 hover:text-neutral-800"
+            title="New chat"
+            aria-label="New chat"
+          >
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+          <button
+            onClick={logout}
+            className="text-sm text-neutral-500 hover:text-neutral-800"
+          >
+            Log out
+          </button>
+        </div>
       </header>
 
       <div className="px-3 py-2">
@@ -114,6 +138,15 @@ export default function Sidebar() {
           />
         ))}
       </div>
+
+      {showNewChat && <NewChatModal onClose={() => setShowNewChat(false)} />}
+
+      {(showProfile || needsSetup) && (
+        <ProfileModal
+          firstTime={needsSetup}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </aside>
   );
 }
